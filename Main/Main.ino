@@ -26,11 +26,14 @@ void setup() {
 }
 
 signed int fc=0;
+int note=0;
 
 void loop() {
 
     // spi: 12ms
     // sw: 100ms
+
+    //Serial.print("loop");
     
     display.firstPage();
     do 
@@ -42,13 +45,20 @@ void loop() {
     }
     while(display.nextPage()); 
     
-    //delay(10);
+    delay(500);
     /*
      dco_setLpfFc(fc);
      fc+=10;
      if(fc>2000)
         fc=0;
-      */ 
+    */
+
+    note++;
+    if(note>=3)
+      note=0;
+    dco_setNote(note);
+        
+      
 }
 
 

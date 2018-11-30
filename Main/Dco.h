@@ -9,3 +9,6 @@ void dco_setLpfFc(signed int fcValue);
 #define SYNTH_WAVEFORM_SAW        1
 #define SYNTH_WAVEFORM_TRIANGLE   2
 
+
+void dco_setNote(int note);
+
