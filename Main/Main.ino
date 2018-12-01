@@ -54,7 +54,7 @@ void loop() {
     */
 
     note++;
-    if(note>=3)
+    if(note>=5)
       note=0;
     dco_setNote(note);
         
