@@ -56,7 +56,7 @@ void loop() {
     note++;
     if(note>=5)
       note=0;
-    dco_setNote(note);
+    dco_setNote(note+48); // starts from C3
         
       
 }
