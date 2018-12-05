@@ -45,7 +45,7 @@ void loop() {
     }
     while(display.nextPage()); 
     
-    delay(500);
+    delay(1000);
     /*
      dco_setLpfFc(fc);
      fc+=10;
@@ -54,9 +54,9 @@ void loop() {
     */
 
     note++;
-    if(note>=5)
+    if(note>=4)
       note=0;
-    dco_setNote(note+48); // starts from C3
+    dco_setNote(4); // starts from C3
         
       
 }

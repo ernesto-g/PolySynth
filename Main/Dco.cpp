@@ -83,7 +83,7 @@ void dco_init(void)
       n[i]=0;
     }
 
-    synthWaveform = 0;
+    synthWaveform = 7;
     //_________ 
 
     // prueba
@@ -108,6 +108,7 @@ void dco_init(void)
 
 void dco_setNote(int note)
 {
+  /*
     if(note<MIDI_C1_NOTE)
         return;
     note = note-MIDI_C1_NOTE;
@@ -123,8 +124,9 @@ void dco_setNote(int note)
         ddsInfo[indexFreeVoice].delta=(1<<octave); // octave
         ddsInfo[indexFreeVoice].tableLen = waveTablesInfo[synthWaveform].len[baseNote]; // table len
     }
+    */
     
-    /*                
+                    
     int i;
     switch(note)
     {
@@ -132,45 +134,46 @@ void dco_setNote(int note)
                 for(i=0;i<VOICES_LEN; i++)
                 {
                     ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=KORG_M3R_TABLE_C; // nota
-                    ddsInfo[i].tableLen = KORG_M3R_TABLE_C_LEN; // len de tabla
+                    ddsInfo[i].table=ALESIS_FUSION_BASS_TABLE_C; // nota
+                    ddsInfo[i].tableLen = ALESIS_FUSION_BASS_TABLE_C_LEN; // len de tabla
+                    
                 }
                 break;
         case 1:
                 for(i=0;i<VOICES_LEN; i++)
                 {
                     ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=KORG_M3R_TABLE_D; // nota
-                    ddsInfo[i].tableLen = KORG_M3R_TABLE_D_LEN; // len de tabla
+                    ddsInfo[i].table=GUITAR_12STR_TABLE_C; // nota
+                    ddsInfo[i].tableLen = GUITAR_12STR_TABLE_C_LEN; // len de tabla                    
                 }
                 break;
         case 2:
                 for(i=0;i<VOICES_LEN; i++)
                 {
                     ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=KORG_M3R_TABLE_E; // nota
-                    ddsInfo[i].tableLen = KORG_M3R_TABLE_E_LEN; // len de tabla
+                    ddsInfo[i].table=GUITAR_TABLE_C; // nota
+                    ddsInfo[i].tableLen = GUITAR_TABLE_C_LEN; // len de tabla
                 }
                 break;
         case 3:
                 for(i=0;i<VOICES_LEN; i++)
                 {
                     ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=KORG_M3R_TABLE_F; // nota
-                    ddsInfo[i].tableLen = KORG_M3R_TABLE_F_LEN; // len de tabla
+                    ddsInfo[i].table=KORG_M3R_TABLE_C; // nota
+                    ddsInfo[i].tableLen = KORG_M3R_TABLE_C_LEN; // len de tabla
                 }
                 break;
         case 4:
                 for(i=0;i<VOICES_LEN; i++)
                 {
                     ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=KORG_M3R_TABLE_G; // nota
-                    ddsInfo[i].tableLen = KORG_M3R_TABLE_G_LEN; // len de tabla
+                    ddsInfo[i].table=MARIMBA_TABLE_C; // nota
+                    ddsInfo[i].tableLen = MARIMBA_TABLE_C_LEN; // len de tabla
                 }
                 break;                
                 
     }
-    */
+    
 }
 
 static void dcoUpdateForWaveSamples(void)
