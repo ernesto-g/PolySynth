@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include "Dco.h"
+#include "MIDIReception.h"
+#include "MIDIManager.h"
 
 #define PWM_MAX_VALUE 508  // 127*4 (a lower value is used so counters can add or substract a 4 value)
 
@@ -48,10 +50,10 @@ void adsr_init(void)
     
     adsrValue[i] = 0;
 
-    attackRate[i]=0; //64;
-    decayRate[i]=0; //64;
-    sustainValue[i] = ATTACK_MAX_VALUE; //ATTACK_MAX_VALUE/2;
-    releaseRate[i]=0; //64;
+    attackRate[i]=64; //64;
+    decayRate[i]=64; //64;
+    sustainValue[i] = ATTACK_MAX_VALUE*2/3; //ATTACK_MAX_VALUE/2;
+    releaseRate[i]=64; //64;
 
     attackRateCounter[i]=attackRate[i];
     decayRateCounter[i]=decayRate[i];
@@ -209,7 +211,8 @@ void adsr_stateMachineTick(void) // freq update: 14,4Khz
           {  
               adsrValue[i]=0;
               state[i] = STATE_IDLE;
-              dco_disableVoice(i);   
+              dco_disableVoice(i);
+              midi_voiceFinishedEvent(i);   
               Serial.print("FIN DE ADSR Num:");
               Serial.print(i,DEC);
               Serial.print("\n"); 

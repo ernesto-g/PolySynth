@@ -5,6 +5,8 @@
 #include "PwmManager.h"
 #include "Dco.h"
 #include "AdsrManager.h"
+#include "MIDIReception.h"
+#include "MIDIManager.h"
 
 /**
  * COMPILATION NOTES
@@ -24,33 +26,16 @@ void setup() {
     pwmm_init();
     dco_init();
 
+    midi_init();
+    midircv_init();
+
+
 }
 
 signed int fc=0;
 int note=0;
 
 void loop() {
-
-/*
-  int c=0;
-  while(1)
-  {
-      pwmm_setValuePwmSlow(0,0);
-      delay(2000);
-      pwmm_setValuePwmSlow(0,100);
-      delay(2000);
-      pwmm_setValuePwmSlow(0,200);
-      delay(2000);
-      pwmm_setValuePwmSlow(0,300);
-      delay(2000);
-      pwmm_setValuePwmSlow(0,400);
-      delay(2000);
-      pwmm_setValuePwmSlow(0,508);
-      delay(2000);
-      
-      
-  }
-*/
 
     // spi: 12ms
     // sw: 100ms
@@ -67,23 +52,17 @@ void loop() {
     }
     while(display.nextPage()); 
     
-    
+    // Test
     delay(20000);
-    /*
-     dco_setLpfFc(fc);
-     fc+=10;
-     if(fc>2000)
-        fc=0;
-    */
-
     //note++;
     //if(note>=4)
     //  note=0;
-    dco_setNote(48); // starts from C3
+    dco_setNote(48,127); // starts from C3
     delay(5000);    
-    dco_releaseNote(48); // starts from C3
-    
-      
+    dco_releaseVoice(0); // starts from C3
+    //____
+
+    midircv_stateMachine();  
 }
 
 

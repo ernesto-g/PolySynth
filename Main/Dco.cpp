@@ -82,22 +82,10 @@ void dco_init(void)
     {
       voices[i]=0;
       n[i]=0;
+      ddsInfo[i].enabled=0;
     }
-
     synthWaveform = 1;
     //_________ 
-
-    // prueba
-    for(i=0;i<VOICES_LEN; i++)
-    {
-      // seteo de nota
-      ddsInfo[i].delta=16; // octava
-      ddsInfo[i].table=SAW_TABLE_D; // nota
-      ddsInfo[i].tableLen = SAW_TABLE_D_LEN; // len de tabla
-      ddsInfo[i].enabled=0;
-      //_____________      
-    }
-    //_______
 
     adsr_init();
     
@@ -108,11 +96,11 @@ void dco_init(void)
 
 
 
-void dco_setNote(int note)
+int dco_setNote(int note, int vel)
 {
   
     if(note<MIDI_C1_NOTE)
-        return;
+        return -1;
     note = note-MIDI_C1_NOTE;
     
     int baseNote = note%12; // C:0 .... B:11
@@ -131,63 +119,17 @@ void dco_setNote(int note)
         ddsInfo[indexFreeVoice].delta=(1<<octave); // octave
         ddsInfo[indexFreeVoice].tableLen = waveTablesInfo[synthWaveform].len[baseNote]; // table len
         ddsInfo[indexFreeVoice].enabled = 1;
-        adsr_triggerEvent(indexFreeVoice, 127);// Velocity at 127
+        adsr_triggerEvent(indexFreeVoice, vel);
     }
-    
-    
-    /*                
-    int i;
-    switch(note)
-    {
-        case 0:
-                for(i=0;i<VOICES_LEN; i++)
-                {
-                    ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=ALESIS_FUSION_BASS_TABLE_C; // nota
-                    ddsInfo[i].tableLen = ALESIS_FUSION_BASS_TABLE_C_LEN; // len de tabla
-                    
-                }
-                break;
-        case 1:
-                for(i=0;i<VOICES_LEN; i++)
-                {
-                    ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=GUITAR_12STR_TABLE_C; // nota
-                    ddsInfo[i].tableLen = GUITAR_12STR_TABLE_C_LEN; // len de tabla                    
-                }
-                break;
-        case 2:
-                for(i=0;i<VOICES_LEN; i++)
-                {
-                    ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=GUITAR_TABLE_C; // nota
-                    ddsInfo[i].tableLen = GUITAR_TABLE_C_LEN; // len de tabla
-                }
-                break;
-        case 3:
-                for(i=0;i<VOICES_LEN; i++)
-                {
-                    ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=KORG_M3R_TABLE_C; // nota
-                    ddsInfo[i].tableLen = KORG_M3R_TABLE_C_LEN; // len de tabla
-                }
-                break;
-        case 4:
-                for(i=0;i<VOICES_LEN; i++)
-                {
-                    ddsInfo[i].delta=4; // octava
-                    ddsInfo[i].table=MARIMBA_TABLE_C; // nota
-                    ddsInfo[i].tableLen = MARIMBA_TABLE_C_LEN; // len de tabla
-                }
-                break;                
-                
-    }
-    */
+    return indexFreeVoice;
 }
-void dco_releaseNote(int note)
+void dco_releaseVoice(int voice)
 {
-    // mal, buscar voice segun la nota que se libero
-    adsr_gateOffEvent(0); // libero voice 0
+    adsr_gateOffEvent(voice);
+
+    Serial.print("\nLibero voice:");
+    Serial.print(voice,DEC);
+    Serial.print("\n");
 }
 
 void dco_disableVoice(int index)
@@ -216,11 +158,13 @@ inline static void dcoUpdateSamples(void)
     int i;
     for(i=0;i<VOICES_LEN; i++)  // 4.45uS with 6 voices
     {
+        
         if(ddsInfo[i].enabled==0)
         {
             voices[i] = PWM_FAST_MAX_VALUE/2;
             continue;
         } 
+        
         n[i]+=ddsInfo[i].delta;
         
         if(n[i] >= ddsInfo[i].tableLen )

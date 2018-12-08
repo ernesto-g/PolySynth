@@ -1,7 +1,7 @@
 
 void dco_init(void);
-void dco_setNote(int note);
-void dco_releaseNote(int note);
+int dco_setNote(int note, int vel);
+void dco_releaseVoice(int voice);
 
 void dco_disableVoice(int index);
 
