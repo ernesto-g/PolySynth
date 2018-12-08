@@ -83,7 +83,7 @@ void dco_init(void)
       n[i]=0;
     }
 
-    synthWaveform = 7;
+    synthWaveform = 1;
     //_________ 
 
     // prueba
@@ -99,8 +99,8 @@ void dco_init(void)
 
     adsr_init();
     
-    Timer3.attachInterrupt(dcoUpdateForWaveSamples).setFrequency(64000).start(); // freq update: 64Khz
-    Timer4.attachInterrupt(dcoUpdateForADSRs).setFrequency(14400).start(); // freq update: 14.4Khz 
+    //Timer3.attachInterrupt(dcoUpdateForWaveSamples).setFrequency(64000).start(); // freq update: 64Khz
+    //Timer4.attachInterrupt(dcoUpdateForADSRs).setFrequency(14400).start(); // freq update: 14.4Khz 
 }
 
 
@@ -108,7 +108,7 @@ void dco_init(void)
 
 void dco_setNote(int note)
 {
-  /*
+  
     if(note<MIDI_C1_NOTE)
         return;
     note = note-MIDI_C1_NOTE;
@@ -116,17 +116,24 @@ void dco_setNote(int note)
     int baseNote = note%12; // C:0 .... B:11
     int octave = note/12;
 
+    Serial.print("llego nota C3, busco voice libre");
     int indexFreeVoice = searchFreeVoice();
     if(indexFreeVoice>=0)
     {
+          Serial.print("\nHay voz libre:");
+          Serial.print(indexFreeVoice,DEC);
+          Serial.print("\n");
+
         n[indexFreeVoice]=0;
         ddsInfo[indexFreeVoice].table=waveTablesInfo[synthWaveform].table[baseNote]; //table
         ddsInfo[indexFreeVoice].delta=(1<<octave); // octave
         ddsInfo[indexFreeVoice].tableLen = waveTablesInfo[synthWaveform].len[baseNote]; // table len
+
+        adsr_triggerEvent(indexFreeVoice, 127);// Velocity at 127
     }
-    */
     
-                    
+    
+    /*                
     int i;
     switch(note)
     {
@@ -173,8 +180,15 @@ void dco_setNote(int note)
                 break;                
                 
     }
-    
+    */
 }
+void dco_releaseNote(int note)
+{
+    // mal, buscar voice segun la nota que se libero
+    adsr_gateOffEvent(0); // libero voice 0
+}
+
+
 
 static void dcoUpdateForWaveSamples(void)
 {
@@ -249,6 +263,15 @@ void pwmm_init(void)
   pwm_pin9.set_duty_fast(256);
 
   // SLOWs PWM. 9bit@82Khz
+  pinMode(2, OUTPUT);
+  pinMode(3, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(10, OUTPUT);
+  pinMode(11, OUTPUT);
+  pinMode(12, OUTPUT);
+  pinMode(13, OUTPUT);
+  
   analogWrite (2, 128);
   analogWrite (13, 128);
   
@@ -260,7 +283,7 @@ void pwmm_init(void)
 
   analogWrite (11, 128);
   analogWrite (12, 128);
- 
+
   // pins 2 and 3 share the same timer so must have same frequency
   setupTimerPwm (2, 82000, 128); 
   setupTimerPwm (13, 82000, 128); 
@@ -276,6 +299,7 @@ void pwmm_init(void)
   // pins 11 and 12 share the same timer
   setupTimerPwm (11, 82000, 128); 
   setupTimerPwm (12, 82000, 128); 
+ 
 }
 static inline void pwmm_setValuePwmFast(unsigned char index,unsigned int value)
 {
@@ -293,33 +317,79 @@ static inline void pwmm_setValuePwmFast(unsigned char index,unsigned int value)
 }
 void pwmm_setValuePwmSlow(unsigned char index,unsigned int value)
 {
+    value = value +1;
+    /*
+    Serial.print("\nSet PWM:");
+    Serial.print(index,DEC);
+    Serial.print(" valor:");
+    Serial.print(value,DEC);
+    Serial.print("\n");
+    */      
+    int pin;
     switch(index)
     {
-        case PWM_SLOW_0:  TC_SetRA (TC0, 0, value); break;
-        case PWM_SLOW_1:  TC_SetRA (TC2, 1, value); break;
-        case PWM_SLOW_2:  TC_SetRA (TC2, 0, value); break;
-        case PWM_SLOW_3:  TC_SetRB (TC2, 0, value); break;
-        case PWM_SLOW_4:  TC_SetRB (TC2, 1, value); break;
-        case PWM_SLOW_5:  TC_SetRA (TC2, 2, value); break;
-        case PWM_SLOW_6:  TC_SetRB (TC2, 2, value); break;
-        case PWM_SLOW_7:  TC_SetRB (TC0, 0, value); break;
+        case PWM_SLOW_0:  pin=2; break; //TC_SetRA (TC0, 0, value); break;
+        case PWM_SLOW_1:  pin=3; break; //TC_SetRA (TC2, 1, value); break;
+        case PWM_SLOW_2:  pin=4; break; //TC_SetRA (TC2, 0, value); break;
+        case PWM_SLOW_3:  pin=5; break; //TC_SetRB (TC2, 0, value); break;
+        case PWM_SLOW_4:  pin=10; break; //TC_SetRB (TC2, 1, value); break;
+        case PWM_SLOW_5:  pin=11; break; //TC_SetRA (TC2, 2, value); break;
+        case PWM_SLOW_6:  pin=12; break; //TC_SetRB (TC2, 2, value); break;
+        case PWM_SLOW_7:  pin=13; break; //TC_SetRB (TC0, 0, value); break;
     }
+
+    tTimerInfo *pTimer = &timerLookup[pin];
+
+    if (pTimer->output == 0)
+       TC_SetRA (pTimer->pTC, pTimer->channel, value);
+    else
+       TC_SetRB (pTimer->pTC, pTimer->channel, value);
+    
+}
+
+static void TC_SetCMR_ChannelA(Tc *tc, uint32_t chan, uint32_t v)
+{
+  tc->TC_CHANNEL[chan].TC_CMR = (tc->TC_CHANNEL[chan].TC_CMR & 0xFFF0FFFF) | v;
+}
+static void TC_SetCMR_ChannelB(Tc *tc, uint32_t chan, uint32_t v)
+{
+  tc->TC_CHANNEL[chan].TC_CMR = (tc->TC_CHANNEL[chan].TC_CMR & 0xF0FFFFFF) | v;
 }
 static uint32_t setupTimerPwm (byte pin, uint32_t frequency, unsigned dutyCycle)
 {
   uint32_t count = VARIANT_MCK/2/frequency; // 42Mhz/freq
-  tTimerInfo *pTimer = &timerLookup[pin];
+  tTimerInfo* pTimer = &timerLookup[pin];
 
-  //Serial.write("COUNT:");
-  //Serial.print(count,DEC);
-  
+  static const uint32_t channelToId[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8 };
+
+  uint32_t interfaceID = channelToId[pTimer->channel];
+  pmc_enable_periph_clk(TC_INTERFACE_ID + interfaceID);
+
+
+  TC_Configure(pTimer->pTC, pTimer->channel,
+        TC_CMR_TCCLKS_TIMER_CLOCK1 |
+        TC_CMR_WAVE |         // Waveform mode
+        TC_CMR_WAVSEL_UP_RC | // Counter running up and reset when equals to RC
+        TC_CMR_EEVT_XC0 |     // Set external events from XC0 (this setup TIOB as output)
+        TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_CLEAR |
+        TC_CMR_BCPB_CLEAR | TC_CMR_BCPC_CLEAR);
+        
   if (pTimer != NULL)
   {
-    TC_SetRC (pTimer->pTC, pTimer->channel, count);
+     TC_SetRC (pTimer->pTC, pTimer->channel, count);
+
     if (pTimer->output == 0)
+    {
        TC_SetRA (pTimer->pTC, pTimer->channel, count * dutyCycle / 256);
+       TC_SetCMR_ChannelA(pTimer->pTC, pTimer->channel, TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET);
+    }
     else
+    {
        TC_SetRB (pTimer->pTC, pTimer->channel, count * dutyCycle / 256);
+       TC_SetCMR_ChannelB(pTimer->pTC, pTimer->channel, TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET);
+    }
+
+    TC_Start( pTimer->pTC, pTimer->channel );
   
     return count;
   }

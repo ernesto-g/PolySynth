@@ -4,6 +4,7 @@
 #include "U8x8lib.h"
 #include "PwmManager.h"
 #include "Dco.h"
+#include "AdsrManager.h"
 
 /**
  * COMPILATION NOTES
@@ -30,11 +31,47 @@ int note=0;
 
 void loop() {
 
+  int c=0;
+  while(1)
+  {
+      /*
+      delay(1);
+      adsr_stateMachineTick();
+      c++;
+      if(c==5000)
+      {
+        dco_setNote(48); // starts from C3
+      }
+      if(c==7000)
+      {
+        dco_releaseNote(48); // starts from C3
+      }
+
+      if(c==10000)
+        c=0;
+      */
+      pwmm_setValuePwmSlow(0,0);
+      delay(2000);
+      pwmm_setValuePwmSlow(0,100);
+      delay(2000);
+      pwmm_setValuePwmSlow(0,200);
+      delay(2000);
+      pwmm_setValuePwmSlow(0,300);
+      delay(2000);
+      pwmm_setValuePwmSlow(0,400);
+      delay(2000);
+      pwmm_setValuePwmSlow(0,508);
+      delay(2000);
+      
+      
+  }
+
+
     // spi: 12ms
     // sw: 100ms
 
     //Serial.print("loop");
-    
+    /*
     display.firstPage();
     do 
     {
@@ -44,8 +81,9 @@ void loop() {
         display.drawStr(0, 60, "Linea 3 Linea 3"); 
     }
     while(display.nextPage()); 
+    */
     
-    delay(1000);
+    delay(5000);
     /*
      dco_setLpfFc(fc);
      fc+=10;
@@ -53,11 +91,13 @@ void loop() {
         fc=0;
     */
 
-    note++;
-    if(note>=4)
-      note=0;
-    dco_setNote(4); // starts from C3
-        
+    //note++;
+    //if(note>=4)
+    //  note=0;
+    dco_setNote(48); // starts from C3
+    delay(2000);    
+    dco_releaseNote(48); // starts from C3
+    
       
 }
 

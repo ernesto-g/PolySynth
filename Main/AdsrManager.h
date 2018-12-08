@@ -2,7 +2,7 @@ void adsr_stateMachineTick(void);
 void adsr_init(void);
 
 void adsr_gateOnEvent(void);
-void adsr_gateOffEvent(void);
+void adsr_gateOffEvent(int index);
 void adsr_triggerEvent(int index, int vel);
 int adsr_getFreeAdsr(int indexMax);
 

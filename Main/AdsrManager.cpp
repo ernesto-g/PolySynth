@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include "Dco.h"
 
 #define PWM_MAX_VALUE 508  // 127*4 (a lower value is used so counters can add or substract a 4 value)
@@ -69,13 +70,13 @@ void adsr_gateOnEvent(void)
 {
 
 }
-void adsr_gateOffEvent(void)
+void adsr_gateOffEvent(int index)
 {
-    int i;
-    for(i=0; i<ADSR_LEN; i++)
+   // int i;
+   // for(i=0; i<ADSR_LEN; i++)
     {
-        releaseRateCounter[i] = releaseRate[i];
-        state[i] = STATE_RELEASE;
+        releaseRateCounter[index] = releaseRate[index];
+        state[index] = STATE_RELEASE;
     }
 }
 
@@ -207,8 +208,12 @@ void adsr_stateMachineTick(void) // freq update: 14,4Khz
           if(adsrValue[i]<=0)
           {  
               adsrValue[i]=0;
-              state[i] = STATE_IDLE;    
+              state[i] = STATE_IDLE;   
+              Serial.print("FIN DE ADSR Num:");
+              Serial.print(i,DEC);
+              Serial.print("\n"); 
           }
+          
           setAdsrPwmValue(i,adsrValue[i]);                
         }
         break;
