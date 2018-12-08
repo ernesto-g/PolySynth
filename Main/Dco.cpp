@@ -58,6 +58,7 @@ struct S_ddsInfo
   unsigned char delta; // 1:octave C1. 2: octave C2. 4: octave C3. 8: octave C4 ....
   const volatile short unsigned int* table; // table pointer to specific note and waveform
   unsigned int tableLen;  
+  unsigned char enabled;
 };
 typedef struct S_ddsInfo DDSInfo;
 
@@ -93,14 +94,15 @@ void dco_init(void)
       ddsInfo[i].delta=16; // octava
       ddsInfo[i].table=SAW_TABLE_D; // nota
       ddsInfo[i].tableLen = SAW_TABLE_D_LEN; // len de tabla
+      ddsInfo[i].enabled=0;
       //_____________      
     }
     //_______
 
     adsr_init();
     
-    //Timer3.attachInterrupt(dcoUpdateForWaveSamples).setFrequency(64000).start(); // freq update: 64Khz
-    //Timer4.attachInterrupt(dcoUpdateForADSRs).setFrequency(14400).start(); // freq update: 14.4Khz 
+    Timer3.attachInterrupt(dcoUpdateForWaveSamples).setFrequency(64000).start(); // freq update: 64Khz
+    Timer4.attachInterrupt(dcoUpdateForADSRs).setFrequency(14400).start(); // freq update: 14.4Khz 
 }
 
 
@@ -128,7 +130,7 @@ void dco_setNote(int note)
         ddsInfo[indexFreeVoice].table=waveTablesInfo[synthWaveform].table[baseNote]; //table
         ddsInfo[indexFreeVoice].delta=(1<<octave); // octave
         ddsInfo[indexFreeVoice].tableLen = waveTablesInfo[synthWaveform].len[baseNote]; // table len
-
+        ddsInfo[indexFreeVoice].enabled = 1;
         adsr_triggerEvent(indexFreeVoice, 127);// Velocity at 127
     }
     
@@ -188,7 +190,10 @@ void dco_releaseNote(int note)
     adsr_gateOffEvent(0); // libero voice 0
 }
 
-
+void dco_disableVoice(int index)
+{
+    ddsInfo[index].enabled=0;
+}
 
 static void dcoUpdateForWaveSamples(void)
 {
@@ -211,6 +216,11 @@ inline static void dcoUpdateSamples(void)
     int i;
     for(i=0;i<VOICES_LEN; i++)  // 4.45uS with 6 voices
     {
+        if(ddsInfo[i].enabled==0)
+        {
+            voices[i] = PWM_FAST_MAX_VALUE/2;
+            continue;
+        } 
         n[i]+=ddsInfo[i].delta;
         
         if(n[i] >= ddsInfo[i].tableLen )

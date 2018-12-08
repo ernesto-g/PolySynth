@@ -31,25 +31,10 @@ int note=0;
 
 void loop() {
 
+/*
   int c=0;
   while(1)
   {
-      /*
-      delay(1);
-      adsr_stateMachineTick();
-      c++;
-      if(c==5000)
-      {
-        dco_setNote(48); // starts from C3
-      }
-      if(c==7000)
-      {
-        dco_releaseNote(48); // starts from C3
-      }
-
-      if(c==10000)
-        c=0;
-      */
       pwmm_setValuePwmSlow(0,0);
       delay(2000);
       pwmm_setValuePwmSlow(0,100);
@@ -65,13 +50,13 @@ void loop() {
       
       
   }
-
+*/
 
     // spi: 12ms
     // sw: 100ms
 
     //Serial.print("loop");
-    /*
+    
     display.firstPage();
     do 
     {
@@ -81,9 +66,9 @@ void loop() {
         display.drawStr(0, 60, "Linea 3 Linea 3"); 
     }
     while(display.nextPage()); 
-    */
     
-    delay(5000);
+    
+    delay(20000);
     /*
      dco_setLpfFc(fc);
      fc+=10;
@@ -95,7 +80,7 @@ void loop() {
     //if(note>=4)
     //  note=0;
     dco_setNote(48); // starts from C3
-    delay(2000);    
+    delay(5000);    
     dco_releaseNote(48); // starts from C3
     
       
