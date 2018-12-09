@@ -58,8 +58,18 @@ void loop() {
     //if(note>=4)
     //  note=0;
     dco_setNote(48,127); // starts from C3
+    dco_setNote(49,127); // starts from D3
+    dco_setNote(50,127); // starts from D3
+    dco_setNote(51,127); // starts from D3
+    dco_setNote(52,127); // starts from D3
+    dco_setNote(53,127); // starts from D3
     delay(5000);    
     dco_releaseVoice(0); // starts from C3
+    dco_releaseVoice(1); // starts from C3
+    dco_releaseVoice(2); // starts from C3
+    dco_releaseVoice(3); // starts from C3
+    dco_releaseVoice(4); // starts from C3
+    dco_releaseVoice(5); // starts from C3
     //____
 
     midircv_stateMachine();  

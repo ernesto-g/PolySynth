@@ -282,12 +282,12 @@ void pwmm_setValuePwmSlow(unsigned char index,unsigned int value)
     int pin;
     switch(index)
     {
-        case PWM_SLOW_0:  pin=2; break; //TC_SetRA (TC0, 0, value); break;
-        case PWM_SLOW_1:  pin=3; break; //TC_SetRA (TC2, 1, value); break;
-        case PWM_SLOW_2:  pin=4; break; //TC_SetRA (TC2, 0, value); break;
-        case PWM_SLOW_3:  pin=5; break; //TC_SetRB (TC2, 0, value); break;
-        case PWM_SLOW_4:  pin=10; break; //TC_SetRB (TC2, 1, value); break;
-        case PWM_SLOW_5:  pin=11; break; //TC_SetRA (TC2, 2, value); break;
+        case PWM_SLOW_0:  pin=2; break; //TC_SetRA (TC0, 0, value); break; // OK
+        case PWM_SLOW_1:  pin=3; break; //TC_SetRA (TC2, 1, value); break; // OK
+        case PWM_SLOW_2:  pin=4; break; //TC_SetRA (TC2, 0, value); break;  // OK
+        case PWM_SLOW_3:  pin=5; break; //TC_SetRB (TC2, 0, value); break; // OK
+        case PWM_SLOW_4:  pin=10; break; //TC_SetRB (TC2, 1, value); break; // OK
+        case PWM_SLOW_5:  pin=11; break; //TC_SetRA (TC2, 2, value); break; // OK
         case PWM_SLOW_6:  pin=12; break; //TC_SetRB (TC2, 2, value); break;
         case PWM_SLOW_7:  pin=13; break; //TC_SetRB (TC0, 0, value); break;
     }
@@ -340,7 +340,7 @@ static uint32_t setupTimerPwm (byte pin, uint32_t frequency, unsigned dutyCycle)
     else
     {
        TC_SetRB (pTimer->pTC, pTimer->channel, count * dutyCycle / 256);
-       TC_SetCMR_ChannelB(pTimer->pTC, pTimer->channel, TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_SET);
+       TC_SetCMR_ChannelB(pTimer->pTC, pTimer->channel, TC_CMR_BCPB_CLEAR | TC_CMR_BCPC_SET);
     }
 
     TC_Start( pTimer->pTC, pTimer->channel );
