@@ -7,6 +7,7 @@
 #include "AdsrManager.h"
 #include "MIDIReception.h"
 #include "MIDIManager.h"
+#include "FrontPanel.h"
 
 /**
  * COMPILATION NOTES
@@ -28,6 +29,7 @@ void setup() {
 
     midi_init();
     midircv_init();
+    frontp_init();
 
 
 }

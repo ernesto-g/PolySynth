@@ -259,10 +259,10 @@ static inline void pwmm_setValuePwmFast(unsigned char index,unsigned int value)
 {
     switch(index)
     {
-        case PWM_FAST_0: pwm_pin34.set_duty_fast(value); break;
-        case PWM_FAST_1: pwm_pin36.set_duty_fast(value); break;
-        case PWM_FAST_2: pwm_pin38.set_duty_fast(value); break;
-        case PWM_FAST_3: pwm_pin40.set_duty_fast(value); break;
+        case PWM_FAST_0: pwm_pin34.set_duty_fast(value); break; // OK
+        case PWM_FAST_1: pwm_pin36.set_duty_fast(value); break; // OK
+        case PWM_FAST_2: pwm_pin38.set_duty_fast(value); break; // OK
+        case PWM_FAST_3: pwm_pin40.set_duty_fast(value); break; // OK
         case PWM_FAST_4: pwm_pin6.set_duty_fast(value); break;
         case PWM_FAST_5: pwm_pin7.set_duty_fast(value); break;
         case PWM_FAST_6: pwm_pin8.set_duty_fast(value); break;
