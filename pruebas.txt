@@ -1,10 +1,11 @@
-1) circuito de pedal
-2) simular diferencial
-3) probar encoders para ver si hace falta pullups
-4) probar mem i2c para ver que el puerto i2c sea el que va
-5) chequear salidas pwm para ver que sean los pines correctos
+
+
 6) ver de poner llave para filtro lpf y hpf
-7) agregar pines sync
-8) agregar led lfo
-9) agregar led overdrive adc
-10) Agregar pines de spi para lcd y memoria sd
+2) simular diferencial
+
+*1) circuito de pedal
+*3) probar encoders para ver si hace falta pullups: NO HACE FALTA
+*4) probar mem i2c para ver que el puerto i2c sea el que va: NO VAN LOS PULLUPS
+*5) chequear salidas pwm para ver que sean los pines correctos
+*7) agregar pines sync
+*10) Agregar pines de spi para lcd y memoria sd

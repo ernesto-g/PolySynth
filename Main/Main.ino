@@ -8,6 +8,7 @@
 #include "MIDIReception.h"
 #include "MIDIManager.h"
 #include "FrontPanel.h"
+#include "Memory.h"
 
 /**
  * COMPILATION NOTES
@@ -19,6 +20,8 @@ U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI display(U8G2_R0, /* cs=*/ 53, /* dc=*/ 51,
   
 void setup() {  
     Serial.begin(9600);
+
+
     display.begin();
     display.setPowerSave(0);
 
@@ -27,11 +30,13 @@ void setup() {
     pwmm_init();
     dco_init();
 
+    mem_init();
+
     midi_init();
     midircv_init();
     frontp_init();
 
-
+    
 }
 
 signed int fc=0;
@@ -43,7 +48,8 @@ void loop() {
     // sw: 100ms
 
     //Serial.print("loop");
-    
+
+    /*
     display.firstPage();
     do 
     {
@@ -53,7 +59,9 @@ void loop() {
         display.drawStr(0, 60, "Linea 3 Linea 3"); 
     }
     while(display.nextPage()); 
-    
+    */
+
+    /*
     // Test
     delay(20000);
     //note++;
@@ -73,8 +81,16 @@ void loop() {
     dco_releaseVoice(4); // starts from C3
     dco_releaseVoice(5); // starts from C3
     //____
+    */
 
-    midircv_stateMachine();  
+/*
+     int pos = frontp_getEncoderPosition(0);
+     Serial.print("POS:");
+     Serial.print(pos,DEC);
+     Serial.print("\n"); 
+     delay(100);
+*/  
+    //midircv_stateMachine();  
 }
 
 
