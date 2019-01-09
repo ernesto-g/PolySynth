@@ -44,6 +44,7 @@ tTimerInfo timerLookup [] =
 
 static uint32_t setupTimerPwm (byte pin, uint32_t frequency, unsigned dutyCycle);
 static inline void pwmm_setValuePwmFast(unsigned char index,unsigned int value);
+static uint32_t setupTimerPwmInitTc (byte pin);
 //___________________________________________________________________________________________________________________________
 
 // ******************************************** Wave forms ******************************************************************
@@ -217,14 +218,14 @@ void pwmm_init(void)
   pwm_pin9.set_duty_fast(256);
 
   // SLOWs PWM. 9bit@82Khz
-  pinMode(2, OUTPUT);
-  pinMode(3, OUTPUT);
-  pinMode(4, OUTPUT);
-  pinMode(5, OUTPUT);
-  pinMode(10, OUTPUT);
-  pinMode(11, OUTPUT);
-  pinMode(12, OUTPUT);
-  pinMode(13, OUTPUT);
+  pinMode(2, OUTPUT); //no
+  pinMode(3, OUTPUT); //no
+  pinMode(4, OUTPUT); // OK
+  pinMode(5, OUTPUT); //no
+  pinMode(10, OUTPUT); // OK
+  pinMode(11, OUTPUT); //no
+  pinMode(12, OUTPUT); // ok
+  pinMode(13, OUTPUT); // ok
   
   analogWrite (2, 128);
   analogWrite (13, 128);
@@ -239,18 +240,22 @@ void pwmm_init(void)
   analogWrite (12, 128);
 
   // pins 2 and 3 share the same timer so must have same frequency
+  setupTimerPwmInitTc (2);
   setupTimerPwm (2, 82000, 128); 
   setupTimerPwm (13, 82000, 128); 
   
   // pins 5 and 4 share the same timer
+  setupTimerPwmInitTc (5);
   setupTimerPwm (5, 82000, 128); 
   setupTimerPwm (4, 82000, 128); 
 
   // pins 3 and 10 share the same timer
+  setupTimerPwmInitTc (3);
   setupTimerPwm (3, 82000, 128); 
   setupTimerPwm (10, 82000, 128); 
 
   // pins 11 and 12 share the same timer
+  setupTimerPwmInitTc (11);
   setupTimerPwm (11, 82000, 128); 
   setupTimerPwm (12, 82000, 128); 
  
@@ -278,7 +283,7 @@ void pwmm_setValuePwmSlow(unsigned char index,unsigned int value)
     Serial.print(" valor:");
     Serial.print(value,DEC);
     Serial.print("\n");
-    */      
+      */    
     int pin;
     switch(index)
     {
@@ -309,9 +314,9 @@ static void TC_SetCMR_ChannelB(Tc *tc, uint32_t chan, uint32_t v)
 {
   tc->TC_CHANNEL[chan].TC_CMR = (tc->TC_CHANNEL[chan].TC_CMR & 0xF0FFFFFF) | v;
 }
-static uint32_t setupTimerPwm (byte pin, uint32_t frequency, unsigned dutyCycle)
+
+static uint32_t setupTimerPwmInitTc (byte pin)
 {
-  uint32_t count = VARIANT_MCK/2/frequency; // 42Mhz/freq
   tTimerInfo* pTimer = &timerLookup[pin];
 
   static const uint32_t channelToId[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8 };
@@ -319,7 +324,7 @@ static uint32_t setupTimerPwm (byte pin, uint32_t frequency, unsigned dutyCycle)
   uint32_t interfaceID = channelToId[pTimer->channel];
   pmc_enable_periph_clk(TC_INTERFACE_ID + interfaceID);
 
-
+  
   TC_Configure(pTimer->pTC, pTimer->channel,
         TC_CMR_TCCLKS_TIMER_CLOCK1 |
         TC_CMR_WAVE |         // Waveform mode
@@ -327,6 +332,29 @@ static uint32_t setupTimerPwm (byte pin, uint32_t frequency, unsigned dutyCycle)
         TC_CMR_EEVT_XC0 |     // Set external events from XC0 (this setup TIOB as output)
         TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_CLEAR |
         TC_CMR_BCPB_CLEAR | TC_CMR_BCPC_CLEAR);
+
+}
+
+static uint32_t setupTimerPwm (byte pin, uint32_t frequency, unsigned dutyCycle)
+{
+  uint32_t count = VARIANT_MCK/2/frequency; // 42Mhz/freq
+  tTimerInfo* pTimer = &timerLookup[pin];
+
+  /*
+  static const uint32_t channelToId[] = { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8 };
+  uint32_t interfaceID = channelToId[pTimer->channel];
+  pmc_enable_periph_clk(TC_INTERFACE_ID + interfaceID);
+
+  
+  TC_Configure(pTimer->pTC, pTimer->channel,
+        TC_CMR_TCCLKS_TIMER_CLOCK1 |
+        TC_CMR_WAVE |         // Waveform mode
+        TC_CMR_WAVSEL_UP_RC | // Counter running up and reset when equals to RC
+        TC_CMR_EEVT_XC0 |     // Set external events from XC0 (this setup TIOB as output)
+        TC_CMR_ACPA_CLEAR | TC_CMR_ACPC_CLEAR |
+        TC_CMR_BCPB_CLEAR | TC_CMR_BCPC_CLEAR);
+  
+  */
         
   if (pTimer != NULL)
   {

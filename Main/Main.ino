@@ -47,7 +47,7 @@ void loop() {
     // spi: 12ms
     // sw: 100ms
 
-    //Serial.print("loop");
+    Serial.print("loop");
 
     /*
     display.firstPage();
@@ -61,7 +61,7 @@ void loop() {
     while(display.nextPage()); 
     */
 
-    /*
+    
     // Test
     delay(20000);
     //note++;
@@ -81,7 +81,7 @@ void loop() {
     dco_releaseVoice(4); // starts from C3
     dco_releaseVoice(5); // starts from C3
     //____
-    */
+    
 
 /*
      int pos = frontp_getEncoderPosition(0);
