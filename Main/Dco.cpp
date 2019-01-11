@@ -85,7 +85,7 @@ void dco_init(void)
       n[i]=0;
       ddsInfo[i].enabled=0;
     }
-    synthWaveform = 1;
+    synthWaveform = 0;
     //_________ 
 
     adsr_init();
