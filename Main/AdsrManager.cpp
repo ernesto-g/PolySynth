@@ -50,7 +50,7 @@ void adsr_init(void)
     
     adsrValue[i] = 0;
 
-    attackRate[i]=64; //64;
+    attackRate[i]=24; //64;
     decayRate[i]=64; //64;
     sustainValue[i] = ATTACK_MAX_VALUE*2/3; //ATTACK_MAX_VALUE/2;
     releaseRate[i]=64; //64;

@@ -95,6 +95,10 @@ void dco_init(void)
 }
 
 
+void dco_setWaveForm(int wf)
+{
+    synthWaveform = wf;
+}
 
 
 int dco_setNote(int note, int vel)
@@ -107,13 +111,13 @@ int dco_setNote(int note, int vel)
     int baseNote = note%12; // C:0 .... B:11
     int octave = note/12;
 
-    Serial.print("llego nota C3, busco voice libre");
+    //Serial.print("llego nota C3, busco voice libre");
     int indexFreeVoice = searchFreeVoice();
     if(indexFreeVoice>=0)
     {
-          Serial.print("\nHay voz libre:");
-          Serial.print(indexFreeVoice,DEC);
-          Serial.print("\n");
+         // Serial.print("\nHay voz libre:");
+          //Serial.print(indexFreeVoice,DEC);
+          //Serial.print("\n");
 
         n[indexFreeVoice]=0;
         ddsInfo[indexFreeVoice].table=waveTablesInfo[synthWaveform].table[baseNote]; //table
@@ -128,9 +132,9 @@ void dco_releaseVoice(int voice)
 {
     adsr_gateOffEvent(voice);
 
-    Serial.print("\nLibero voice:");
-    Serial.print(voice,DEC);
-    Serial.print("\n");
+   // Serial.print("\nLibero voice:");
+   // Serial.print(voice,DEC);
+   // Serial.print("\n");
 }
 
 void dco_disableVoice(int index)
