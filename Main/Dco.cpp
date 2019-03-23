@@ -144,7 +144,7 @@ void dco_disableVoice(int index)
 
 static void dcoUpdateForWaveSamples(void)
 {
-    digitalWrite(24, HIGH);
+    //digitalWrite(24, HIGH);
   
     // Generate waveform
     dcoUpdateSamples();
@@ -155,7 +155,7 @@ static void dcoUpdateForWaveSamples(void)
       pwmm_setValuePwmFast(i,(voices[i]>>4));
     //_________  
 
-    digitalWrite(24, LOW);
+    //digitalWrite(24, LOW);
 }
 
 inline static void dcoUpdateSamples(void)

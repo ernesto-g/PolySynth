@@ -15,7 +15,9 @@
  * Edit ~\AppData\Local\Arduino15\packages\arduino\hardware\sam\1.6.11\platform.txt and change flags from -Os to -O3 
  */
 
-U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI display(U8G2_R0, /* cs=*/ 53, /* dc=*/ 51, /* reset=*/ 49);
+#define PIN_SD_CS   52
+
+U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI display(U8G2_R0, /* cs=*/ 49, /* dc=*/ 51, /* reset=*/ 53);
 //U8G2_SH1106_128X64_NONAME_F_4W_SW_SPI display(U8G2_R0, /* CLK=*/ 30,/* MOSI=*/ 31,/* cs=*/ 7, /* dc=*/ 6, /* reset=*/ 8);
   
 void setup() {  
@@ -25,7 +27,10 @@ void setup() {
     display.begin();
     display.setPowerSave(0);
 
-    pinMode(24, OUTPUT); 
+    // CS for SDcard disabled
+    pinMode(PIN_SD_CS, OUTPUT);
+    digitalWrite(PIN_SD_CS, HIGH); 
+    //_______________________
 
     pwmm_init();
     dco_init();
@@ -49,7 +54,7 @@ void loop() {
 
     //Serial.print("loop");
 
-    /*
+    
     display.firstPage();
     do 
     {
@@ -59,7 +64,7 @@ void loop() {
         display.drawStr(0, 60, "Linea 3 Linea 3"); 
     }
     while(display.nextPage()); 
-    */
+    
 
 
     /*
