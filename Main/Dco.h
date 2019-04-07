@@ -8,7 +8,7 @@ void dco_disableVoice(int index);
 void pwmm_setValuePwmSlow(unsigned char index,unsigned int value);
 
 void dco_setWaveForm(int wf);
-
+int dco_getWaveForm(void);
 
 #define PWM_FAST_MAX_VALUE 572
 

@@ -53,6 +53,7 @@ static uint32_t setupTimerPwmInitTc (byte pin);
 // ********************************************** DCO Management ************************************************************
 #define VOICES_LEN    6
 #define MIDI_C1_NOTE  24
+#define SAMPLING_FREQ 64000
 
 struct S_ddsInfo
 {
@@ -60,6 +61,8 @@ struct S_ddsInfo
   const volatile short unsigned int* table; // table pointer to specific note and waveform
   unsigned int tableLen;  
   unsigned char enabled;
+  unsigned int counterMax;
+  unsigned int counter;
 };
 typedef struct S_ddsInfo DDSInfo;
 
@@ -67,6 +70,7 @@ static void dcoUpdateForWaveSamples(void);
 static void dcoUpdateForADSRs(void);
 inline static void dcoUpdateSamples(void);
 static int searchFreeVoice(void);
+static float getFreqByNote(int note);
 
 static volatile unsigned int synthWaveform;
 static volatile DDSInfo ddsInfo[VOICES_LEN];
@@ -90,7 +94,7 @@ void dco_init(void)
 
     adsr_init();
     
-    Timer3.attachInterrupt(dcoUpdateForWaveSamples).setFrequency(64000).start(); // freq update: 64Khz
+    Timer3.attachInterrupt(dcoUpdateForWaveSamples).setFrequency(SAMPLING_FREQ).start(); // freq update: 64Khz
     Timer4.attachInterrupt(dcoUpdateForADSRs).setFrequency(14400).start(); // freq update: 14.4Khz 
 }
 
@@ -98,6 +102,10 @@ void dco_init(void)
 void dco_setWaveForm(int wf)
 {
     synthWaveform = wf;
+}
+int dco_getWaveForm(void)
+{
+    return synthWaveform;
 }
 
 
@@ -124,6 +132,23 @@ int dco_setNote(int note, int vel)
         ddsInfo[indexFreeVoice].delta=(1<<octave); // octave
         ddsInfo[indexFreeVoice].tableLen = waveTablesInfo[synthWaveform].len[baseNote]; // table len
         ddsInfo[indexFreeVoice].enabled = 1;
+
+/*
+        int nOffset = ddsInfo[indexFreeVoice].tableLen - (((float)SAMPLING_FREQ)/getFreqByNote(note%12)); // number of times I have to add a delta*2 in a sample period
+        if(nOffset>0)
+        {
+          ddsInfo[indexFreeVoice].counterMax = ddsInfo[indexFreeVoice].tableLen / nOffset; // each time the counter reach this value, I will add a delta*2
+          Serial.print("\nCouter max::");
+          Serial.print(ddsInfo[indexFreeVoice].counterMax,DEC);
+          Serial.print("\n");
+        }
+        else
+        {
+          Serial.print("\nNO uso counter");
+          ddsInfo[indexFreeVoice].counterMax = 0xFFFFFFFF; // not used
+        }  
+        ddsInfo[indexFreeVoice].counter = 0;
+  */      
         adsr_triggerEvent(indexFreeVoice, vel);
     }
     return indexFreeVoice;
@@ -169,7 +194,17 @@ inline static void dcoUpdateSamples(void)
             voices[i] = PWM_FAST_MAX_VALUE/2;
             continue;
         } 
-        
+/*
+        ddsInfo[i].counter++;
+        if(ddsInfo[i].counter>=ddsInfo[i].counterMax)
+        {
+            ddsInfo[i].counter=0;
+            n[i]+=(ddsInfo[i].delta*2);
+        }
+        else
+          n[i]+=ddsInfo[i].delta;
+*/
+
         n[i]+=ddsInfo[i].delta;
         
         if(n[i] >= ddsInfo[i].tableLen )
@@ -197,7 +232,10 @@ static int searchFreeVoice(void)
     return -1;
 }
 
-
+static float getFreqByNote(int note)
+{
+    return NOTES_FREQ_TABLE[note];
+}
 // ********************************************** PWM Management ************************************************************
 void pwmm_init(void)
 {

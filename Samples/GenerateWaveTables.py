@@ -43,18 +43,18 @@ def samplesFunction(samples,index,N,waveFormMax):
 
 	
 #INPUT FILE INFO (C3 sample)
-inputFilePeriods = 3	#Amount of periods inside input file
+inputFilePeriods = 1	#Amount of periods inside input file
 inputFileFs = 96000		#Sample rate of input file
 ignoreInputFileLen = False	#if true, truncates input file samples to samples needed for C3. if false, copy all samples in file
 #inputFileName = "C3_MELLOTRON_MA300_96Khz.wav"
 #inputFileName = "C3_MELLOTRON_MB300_96Khz.wav"
 #inputFileName = "C3_MELLOTRON_CELLO_96Khz.wav"
 #inputFileName = "C3_CASIOMT600_96Khz.wav"
-#inputFileName = "C3_Alesis_Fusion_Bass_96Khz_4P.wav"
+inputFileName = "C3_Alesis_Fusion_Bass_96Khz_4P.wav"
 #inputFileName = "C3_KORG_M3R_96Khz_2P.wav"
 #inputFileName = "C3_GUITAR_96Khz.wav"
 #inputFileName = "C3_GUITAR_12STR_96Khz_2P.wav"
-inputFileName = "C3_Marimba_96Khz_3P.wav"
+#inputFileName = "C3_Marimba_96Khz_3P.wav"
 #_______________________________________________________________________________________________
 
 #OUTPUT FILE INFO
@@ -67,8 +67,8 @@ waveFormMax = 572*16	#Output max unsigned level
 #waveFormName = "KORG_M3R"
 #waveFormName = "GUITAR"
 #waveFormName = "GUITAR_12STR"
-#waveFormName = "ALESIS_FUSION_BASS"
-waveFormName = "MARIMBA"
+waveFormName = "ALESIS_FUSION_BASS"
+#waveFormName = "MARIMBA"
 
 #_____________________________________________________________________________________________
 
