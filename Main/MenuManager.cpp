@@ -39,7 +39,8 @@ void menu_init(void)
 
 void menu_loop(void)
 {
-
+    static int mainSelectedItem0=-1;
+    
     switch(mainMenuState)
     {
         case STATE_MAIN:
@@ -47,14 +48,22 @@ void menu_loop(void)
             // Read selected item from encoder
             mainSelectedItem = frontp_getEncoderPosition(0);
             if(mainSelectedItem<0)
+            {
                 mainSelectedItem = 0;
+                frontp_setEncoderPosition(0,mainSelectedItem);
+            }
             if(mainSelectedItem>=MAIN_MENU_TXTS_LEN)
+            {
                 mainSelectedItem = MAIN_MENU_TXTS_LEN-1;
-            frontp_setEncoderPosition(0,mainSelectedItem);
+                frontp_setEncoderPosition(0,mainSelectedItem);
+            }
             //________________________________
-                            
-            printList(MAIN_MENU_TXTS,MAIN_MENU_TXTS_LEN,mainSelectedItem);  
 
+            if(mainSelectedItem!=mainSelectedItem0)
+            {               
+                printList(MAIN_MENU_TXTS,MAIN_MENU_TXTS_LEN,mainSelectedItem);  
+                mainSelectedItem0=mainSelectedItem;
+            }
             if(frontp_getSwState(SW_ENTER)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
             {
                 switch(mainSelectedItem)
@@ -71,17 +80,27 @@ void menu_loop(void)
         {
             // Read selected item from encoder
             int val = frontp_getEncoderPosition(0);
+            static int val0=-1;
             if(val<0)
+            {
                 val = 0;
+                frontp_setEncoderPosition(0,val);
+            }
             if(val>=MAIN_MENU_TXTS_LEN)
+            {
                 val = MAIN_MENU_TXTS_LEN-1;
-            frontp_setEncoderPosition(0,val);
+                frontp_setEncoderPosition(0,val);
+            }
             dco_setWaveForm(val);
             //________________________________
 
-                      
-            showSamplesSinthScreen();
+            if(val!=val0)
+            {
+                val0=val;          
+                showSamplesSinthScreen();
+            }
 
+            
             // Mini piano test
             miniPianoTest();
         
