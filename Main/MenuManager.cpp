@@ -3,6 +3,7 @@
 #include "U8x8lib.h"
 #include "FrontPanel.h"
 #include "Dco.h"
+#include "AdsrManager.h"
 
 char* MAIN_MENU_TXTS[]= {"SAMPLES SYNTH","DRUM MACHINE","CLASSIC SYNTH","CONFIG"};
 #define MAIN_MENU_TXTS_LEN  4
@@ -18,7 +19,9 @@ static int mainSelectedItem;
 
 static void printList(char* pList[],int listLen,int selectedItem);
 static void showSamplesSinthScreen(void);
+static void showSamplesSynthMainScreen(void);
 static void miniPianoTest(void);
+static void samplesSynthMainScreenManager(void);
 
 
 
@@ -27,6 +30,7 @@ static void miniPianoTest(void);
 #define STATE_DRUM_MACHINE  2
 #define STATE_CLASSIC_SYNTH 3
 #define STATE_CONFIG        4
+#define STATE_SAMPLES_SYNTH_MAIN_SCREEN 5
 
 
 void menu_init(void)
@@ -66,6 +70,7 @@ void menu_loop(void)
             }
             if(frontp_getSwState(SW_ENTER)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
             {
+                frontp_resetSwState(SW_ENTER);
                 switch(mainSelectedItem)
                 {
                     case 0: mainMenuState = STATE_SAMPLES_SYNTH;frontp_setEncoderPosition(0,0);break;
@@ -100,56 +105,108 @@ void menu_loop(void)
                 showSamplesSinthScreen();
             }
 
+            if(frontp_getSwState(SW_ENTER)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
+            {
+                frontp_resetSwState(SW_ENTER);
+                mainMenuState = STATE_SAMPLES_SYNTH_MAIN_SCREEN;
+
+                // load encoders initial values
+                frontp_setEncoderPosition(0,adsr_getMidiAttackRate(0));
+                frontp_setEncoderPosition(1,adsr_getMidiDecayRate(0));
+                frontp_setEncoderPosition(2,adsr_getMidiSustainValue(0));
+                frontp_setEncoderPosition(3,adsr_getMidiReleaseRate(0));
+                //_____________________
+            }
             
             // Mini piano test
             miniPianoTest();
         
             break;
         }
+        case STATE_SAMPLES_SYNTH_MAIN_SCREEN:
+        {
+            samplesSynthMainScreenManager();
+            break;
+        }
       
     }
-
-  /*
-    char line1[16];
-  char line2[16];
-  char line3[16];
-
-
-        // test
-      sprintf(line1,"A:%d B:%d",frontp_getEncoderPosition(0),frontp_getEncoderPosition(1));
-      sprintf(line2,"C:%d D:%d",frontp_getEncoderPosition(2),frontp_getEncoderPosition(3));
-      
-      sprintf(line3,"SW OFF");            
-      if(frontp_getSwState(SW_MI)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
-        sprintf(line3,"SW_MI ON");
-      if(frontp_getSwState(SW_OJ)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
-        sprintf(line3,"SW_OJ ON");
-      if(frontp_getSwState(SW_PK)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
-        sprintf(line3,"SW_PK ON");
-      if(frontp_getSwState(SW_QL)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
-        sprintf(line3,"SW_QL ON");
-
-      if(frontp_getSwState(SW_BACK)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
-      {
-        sprintf(line3,"SW_BACK ON");
-        int voice = dco_setNote(35, 127);
-        delay(4000);
-        dco_releaseVoice(voice);
-      }
-      if(frontp_getSwState(SW_ENTER)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
-      {
-        sprintf(line3,"SW_ENTER ON");
-        int voice = dco_setNote(24, 127); // 36:c2
-        delay(4000);
-        dco_releaseVoice(voice);
-      }
-      if(frontp_getSwState(SW_SHIFT)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
-        sprintf(line3,"SW_SHIFT ON");
-      
-      //___________________
-     
-   */
 }
+
+
+static void samplesSynthMainScreenManager(void)
+{
+    int val;
+    int i;
+  
+    showSamplesSynthMainScreen();
+
+    // controls
+    if(frontp_getSwState(SW_BACK)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
+    {
+        frontp_resetSwState(SW_BACK);
+        frontp_setEncoderPosition(0,0); 
+        mainMenuState = STATE_SAMPLES_SYNTH;
+        return;
+    }
+
+    // update attack value
+    val = frontp_getEncoderPosition(0);
+    if(val>127) {
+        val=127;
+        frontp_setEncoderPosition(0,val);    
+    }
+    else if(val <0) {
+        val=0;
+        frontp_setEncoderPosition(0,val);          
+    }
+    for(i=0; i<6;i++)
+      adsr_setMidiAttackRate(i,val); // attack for voices
+    //_____________________      
+    
+    // update decay value
+    val = frontp_getEncoderPosition(1);
+    if(val>127) {
+        val=127;
+        frontp_setEncoderPosition(1,val);    
+    }
+    else if(val <0) {
+        val=0;
+        frontp_setEncoderPosition(1,val);          
+    }
+    for(i=0; i<6;i++)
+      adsr_setMidiDecayRate(i,val); // decay for voices
+    //_____________________      
+    
+    // update sustain value
+    val = frontp_getEncoderPosition(2);
+    if(val>127) {
+        val=127;
+        frontp_setEncoderPosition(2,val);    
+    }
+    else if(val <0) {
+        val=0;
+        frontp_setEncoderPosition(2,val);          
+    }
+    for(i=0; i<6;i++)
+      adsr_setMidiSustainValue(i,val); // sustain for voices
+    //_____________________     
+
+    // update release value
+    val = frontp_getEncoderPosition(3);
+    if(val>127) {
+        val=127;
+        frontp_setEncoderPosition(3,val);    
+    }
+    else if(val <0) {
+        val=0;
+        frontp_setEncoderPosition(3,val);          
+    }
+    for(i=0; i<6;i++)
+      adsr_setMidiReleaseRate(i,val); // release for voices
+    //_____________________      
+    
+}
+
 
 
 static void printList(char* pList[],int listLen,int selectedItem)
@@ -196,6 +253,42 @@ static void printList(char* pList[],int listLen,int selectedItem)
 static void showSamplesSinthScreen(void)
 {
     printList(SAMPLES_NAMES_TXTS,SAMPLES_NAMES_TXTS_LEN,dco_getWaveForm());
+}
+static void showSamplesSynthMainScreen(void)
+{
+      char* pTitle = SAMPLES_NAMES_TXTS[dco_getWaveForm()];
+      char txtAdsr0[32];
+      char txtLine0[64];
+      char txtLine1[64];
+
+      sprintf(txtAdsr0,"%03d %03d %03d %03d",adsr_getMidiAttackRate(0),adsr_getMidiDecayRate(0),adsr_getMidiSustainValue(0),adsr_getMidiReleaseRate(0));
+      sprintf(txtLine0,"A      B     C     D");
+      sprintf(txtLine1," A   D   S   R ");
+      
+      // Display update spi: 12ms 
+      display.firstPage();
+      do 
+      {
+          // title
+          display.setFont(u8g2_font_5x8_tf); 
+          display.drawStr(0, 8, pTitle); 
+          display.drawStr(0, 35, txtLine0);  // encoders indication
+          //______
+          display.setFont(u8g2_font_8x13B_tf); 
+          display.drawStr(0, 24, txtAdsr0); // ADSR values
+          display.drawStr(0, 35, txtLine1); // ADSR indication
+          
+          /*
+          display.drawStr(0, 32, pLines[1]); 
+          display.drawStr(0, 48, pLines[2]); 
+          display.drawStr(0, 64, pLines[3]); 
+        
+          display.setFont(u8g2_font_open_iconic_arrow_2x_t); 
+          display.drawStr(112, 18, "\x45");
+          */  
+      }
+      while(display.nextPage()); 
+      //__________________________   
 }
 
 

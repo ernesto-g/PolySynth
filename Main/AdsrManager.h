@@ -11,4 +11,8 @@ void adsr_setMidiDecayRate(int i, int value);
 void adsr_setMidiReleaseRate(int i, int value);
 void adsr_setMidiSustainValue(int i, int value);
 
+int adsr_getMidiAttackRate(int i);
+int adsr_getMidiDecayRate(int i);
+int adsr_getMidiReleaseRate(int i);
+int adsr_getMidiSustainValue(int i);
 

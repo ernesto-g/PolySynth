@@ -245,4 +245,20 @@ void adsr_setMidiSustainValue(int i, int value)
     sustainValue[i] = (value*SUSTAIN_MAX_VALUE)/127;
 }
 
+int adsr_getMidiAttackRate(int i)
+{  
+    return attackRate[i];
+}
+int adsr_getMidiDecayRate(int i)
+{
+    return decayRate[i];
+}
+int adsr_getMidiReleaseRate(int i)
+{
+    return releaseRate[i];
+}
+int adsr_getMidiSustainValue(int i)
+{
+    return (127*sustainValue[i])/SUSTAIN_MAX_VALUE;
+}
 
