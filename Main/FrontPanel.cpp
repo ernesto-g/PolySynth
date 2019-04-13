@@ -100,6 +100,13 @@ void frontp_init(void)
     attachInterrupt(digitalPinToInterrupt(PIN_1_ENC_D),isrEncD, CHANGE);
     attachInterrupt(digitalPinToInterrupt(PIN_2_ENC_D),isrEncD, CHANGE);
 
+    // change priorities to lowest
+    NVIC_SetPriority(PIOA_IRQn, 0xFF);
+    NVIC_SetPriority(PIOB_IRQn, 0xFF);
+    NVIC_SetPriority(PIOC_IRQn, 0xFF);
+    NVIC_SetPriority(PIOD_IRQn, 0xFF);
+    //_____________________________
+
     frontp_setEncoderPosition(0,0);
     frontp_setEncoderPosition(1,0);
     frontp_setEncoderPosition(2,0);

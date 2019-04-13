@@ -208,11 +208,13 @@ static void miniPianoTest(void)
     
     if(frontp_getSwState(SW_MI)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
     {
+        Serial.print("press C4\n");
         voiceSw0 = dco_setNote(60, 127); // 60:C4
         frontp_resetSwState(SW_MI);
     }
     if(frontp_getSwState(SW_MI)==FRONT_PANEL_SW_STATE_JUST_RELEASED)
     {
+        Serial.print("release C4\n");
         dco_releaseVoice(voiceSw0);
         frontp_resetSwState(SW_MI);
     }

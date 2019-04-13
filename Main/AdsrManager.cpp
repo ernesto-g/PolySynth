@@ -213,9 +213,9 @@ void adsr_stateMachineTick(void) // freq update: 14,4Khz
               state[i] = STATE_IDLE;
               dco_disableVoice(i);
               midi_voiceFinishedEvent(i);   
-              //Serial.print("FIN DE ADSR Num:");
-              //Serial.print(i,DEC);
-              //Serial.print("\n"); 
+              Serial.print("FIN DE ADSR Num:");
+              Serial.print(i,DEC);
+              Serial.print("\n"); 
           }
           
           setAdsrPwmValue(i,adsrValue[i]);                

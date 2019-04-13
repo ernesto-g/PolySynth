@@ -94,7 +94,7 @@ void dco_init(void)
 
     adsr_init();
     
-    Timer3.attachInterrupt(dcoUpdateForWaveSamples).setFrequency(SAMPLING_FREQ).start(); // freq update: 64Khz
+    Timer3.attachInterrupt(dcoUpdateForWaveSamples).setFrequency(SAMPLING_FREQ).start();
     Timer4.attachInterrupt(dcoUpdateForADSRs).setFrequency(14400).start(); // freq update: 14.4Khz 
 }
 
