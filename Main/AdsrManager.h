@@ -16,3 +16,8 @@ int adsr_getMidiDecayRate(int i);
 int adsr_getMidiReleaseRate(int i);
 int adsr_getMidiSustainValue(int i);
 
+void adsr_setFlagEnvLowSpeed(int value);
+int adsr_getFlagEnvLowSpeed(void);
+
+
+

@@ -262,3 +262,13 @@ int adsr_getMidiSustainValue(int i)
     return (127*sustainValue[i])/SUSTAIN_MAX_VALUE;
 }
 
+void adsr_setFlagEnvLowSpeed(int value)
+{
+    flagEnvLowSpeed = value;
+}
+
+int adsr_getFlagEnvLowSpeed(void)
+{
+    return flagEnvLowSpeed;
+}
+
