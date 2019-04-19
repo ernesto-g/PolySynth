@@ -39,7 +39,7 @@ void midircv_stateMachine(void)
 
   c = Serial2.readBytes(&data,1); // 12uS
   if(c>0)
-  {
+  {              
     bufferMidiExternalKeyboard[indexBufferExternal] = data;
     indexBufferExternal++;
     if(indexBufferExternal==3)

@@ -8,14 +8,18 @@
 #define ATTACK_MAX_VALUE  (PWM_MAX_VALUE) 
 #define SUSTAIN_MAX_VALUE  (PWM_MAX_VALUE) 
 
-#define ADSR_LEN      8 // voice 0 to 5 + filter adsr + vca adsr
-
+#define ADSR_LEN        7 // voice 0 to 5 + filter adsr
+#define ADSR_VOICES_LEN 6 // voice 0 to 5
+#define ADSR_FOR_VCF    6 // index for vcf adsr
 
 #define STATE_IDLE    0
 #define STATE_ATTACK  1
 #define STATE_DECAY   2
 #define STATE_SUSTAIN 3
 #define STATE_RELEASE 4
+
+#define ADSR_VCF_MODE_0   0
+#define ADSR_VCF_MODE_1   1
 
 
 
@@ -34,6 +38,7 @@ static int volatile releaseRateCounter[ADSR_LEN];
 
 static int volatile flagEnvLowSpeed;
 static int volatile lowSpeedDivider;
+static int adsrVcfMode;
 
 static volatile int adsrThresholdForFreeVoice;
 
@@ -63,8 +68,9 @@ void adsr_init(void)
   }
 
   adsrThresholdForFreeVoice = (ATTACK_MAX_VALUE/2)/10; // leer de configuracion
-  flagEnvLowSpeed=0; // leer de entrada
+  flagEnvLowSpeed=0;
   lowSpeedDivider=0;
+  adsrVcfMode = ADSR_VCF_MODE_0;
 }
 
 
@@ -74,12 +80,28 @@ void adsr_gateOnEvent(void)
 }
 void adsr_gateOffEvent(int index)
 {
-   // int i;
-   // for(i=0; i<ADSR_LEN; i++)
+    // release index voice
+    releaseRateCounter[index] = releaseRate[index];
+    state[index] = STATE_RELEASE;
+    //____________________
+
+    // release ADSR for VCF if all voices are idle
+    int i;
+    int flagBusyVoice=0;
+    for(i=0; i<ADSR_VOICES_LEN; i++)
     {
-        releaseRateCounter[index] = releaseRate[index];
-        state[index] = STATE_RELEASE;
+        if(state[i]!=STATE_RELEASE && state[i]!=STATE_IDLE)
+        {
+            flagBusyVoice=1;
+            break;
+        }
     }
+    if(flagBusyVoice==0)  // no active voices, release vcf adsr
+    {
+        releaseRateCounter[ADSR_FOR_VCF] = releaseRate[ADSR_FOR_VCF];
+        state[ADSR_FOR_VCF] = STATE_RELEASE;
+    }
+    //____________________________________________
 }
 
 void adsr_triggerEvent(int index, int vel) // vel can be used to modulate attack rate
@@ -89,6 +111,28 @@ void adsr_triggerEvent(int index, int vel) // vel can be used to modulate attack
         attackRateCounter[index]=attackRate[index];
         state[index] = STATE_ATTACK;
     }
+
+    // retrigger ADSR for VCF
+    switch(adsrVcfMode)
+    {
+        case ADSR_VCF_MODE_0:
+        {
+            if(state[ADSR_FOR_VCF]!=STATE_SUSTAIN) // only trigger once
+            {
+                attackRateCounter[ADSR_FOR_VCF]=attackRate[ADSR_FOR_VCF];
+                state[ADSR_FOR_VCF] = STATE_ATTACK;
+            }
+            break;
+        }
+        case ADSR_VCF_MODE_1: // retrigger with each key pressed
+        {
+            attackRateCounter[ADSR_FOR_VCF]=attackRate[ADSR_FOR_VCF];
+            state[ADSR_FOR_VCF] = STATE_ATTACK;          
+            break;
+        }
+    }
+    //_______________________
+     
 }
 
 int adsr_getFreeAdsr(int indexMax)
@@ -213,9 +257,9 @@ void adsr_stateMachineTick(void) // freq update: 14,4Khz
               state[i] = STATE_IDLE;
               dco_disableVoice(i);
               midi_voiceFinishedEvent(i);   
-              Serial.print("FIN DE ADSR Num:");
-              Serial.print(i,DEC);
-              Serial.print("\n"); 
+              //Serial.print("FIN DE ADSR Num:");
+              //Serial.print(i,DEC);
+              //Serial.print("\n"); 
           }
           
           setAdsrPwmValue(i,adsrValue[i]);                

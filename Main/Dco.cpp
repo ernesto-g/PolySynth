@@ -123,32 +123,12 @@ int dco_setNote(int note, int vel)
     int indexFreeVoice = searchFreeVoice();
     if(indexFreeVoice>=0)
     {
-         // Serial.print("\nHay voz libre:");
-          //Serial.print(indexFreeVoice,DEC);
-          //Serial.print("\n");
-
         n[indexFreeVoice]=0;
         ddsInfo[indexFreeVoice].table=waveTablesInfo[synthWaveform].table[baseNote]; //table
         ddsInfo[indexFreeVoice].delta=(1<<octave); // octave
         ddsInfo[indexFreeVoice].tableLen = waveTablesInfo[synthWaveform].len[baseNote]; // table len
         ddsInfo[indexFreeVoice].enabled = 1;
 
-/*
-        int nOffset = ddsInfo[indexFreeVoice].tableLen - (((float)SAMPLING_FREQ)/getFreqByNote(note%12)); // number of times I have to add a delta*2 in a sample period
-        if(nOffset>0)
-        {
-          ddsInfo[indexFreeVoice].counterMax = ddsInfo[indexFreeVoice].tableLen / nOffset; // each time the counter reach this value, I will add a delta*2
-          Serial.print("\nCouter max::");
-          Serial.print(ddsInfo[indexFreeVoice].counterMax,DEC);
-          Serial.print("\n");
-        }
-        else
-        {
-          Serial.print("\nNO uso counter");
-          ddsInfo[indexFreeVoice].counterMax = 0xFFFFFFFF; // not used
-        }  
-        ddsInfo[indexFreeVoice].counter = 0;
-  */      
         adsr_triggerEvent(indexFreeVoice, vel);
     }
     return indexFreeVoice;
@@ -157,9 +137,6 @@ void dco_releaseVoice(int voice)
 {
     adsr_gateOffEvent(voice);
 
-   // Serial.print("\nLibero voice:");
-   // Serial.print(voice,DEC);
-   // Serial.print("\n");
 }
 
 void dco_disableVoice(int index)
