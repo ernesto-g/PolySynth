@@ -172,11 +172,23 @@ static void samplesSynthMainScreenManager(void)
     if(frontp_getSwState(SW_OJ)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
     {
          frontp_resetSwState(SW_OJ);
-         int f = adsr_getFlagEnvLowSpeed();
-         f++;
-         if(f>=2)
-            f = 0;
-         adsr_setFlagEnvLowSpeed(f); 
+         if(shiftActive==0)
+         {   // Configure adsr fast/slow setting
+             int f = adsr_getFlagEnvLowSpeed();
+             f++;
+             if(f>=2)
+                f = 0;
+             adsr_setFlagEnvLowSpeed(f); 
+         }
+         else
+         {
+             // Configure adsr VCF mode setting
+             int m = adsr_getVcfMode();
+             m++;
+             if(m>=2)
+                m = 0;
+             adsr_setVcfMode(m);          
+         }
     }
 
     if(selectedItem==0)
@@ -317,7 +329,7 @@ static void showSamplesSynthMainScreen(int selectedItem)
           }
           else
           {
-              sprintf(txtAdsr1,"ADSR2 SETTINGS%s",txtAdsrSlow);
+              sprintf(txtAdsr1,"ADSR2 SETTINGS%s M%d",txtAdsrSlow,adsr_getVcfMode());
               sprintf(txtAdsr0,"%03d %03d %03d %03d",adsr_getMidiAttackRate(6),adsr_getMidiDecayRate(6),adsr_getMidiSustainValue(6),adsr_getMidiReleaseRate(6));
           }
       }

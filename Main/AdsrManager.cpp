@@ -316,3 +316,13 @@ int adsr_getFlagEnvLowSpeed(void)
     return flagEnvLowSpeed;
 }
 
+void adsr_setVcfMode(int mode)
+{
+    adsrVcfMode = mode; 
+}
+
+int adsr_getVcfMode(void)
+{
+    return adsrVcfMode;
+}
+

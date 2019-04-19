@@ -19,5 +19,7 @@ int adsr_getMidiSustainValue(int i);
 void adsr_setFlagEnvLowSpeed(int value);
 int adsr_getFlagEnvLowSpeed(void);
 
+void adsr_setVcfMode(int mode);
+int adsr_getVcfMode(void);
 
 
