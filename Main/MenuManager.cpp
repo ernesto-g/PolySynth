@@ -261,9 +261,9 @@ static void samplesSynthMainScreenManager(void)
               val=30;
               frontp_setEncoderPosition(0,val);
           }
-          else if(val<0)
+          else if(val<1)
           {
-              val=0;
+              val=1;
               frontp_setEncoderPosition(0,val);
           }          
           dco_setLfoFreq(val);

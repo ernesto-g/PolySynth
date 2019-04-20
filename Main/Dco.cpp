@@ -73,12 +73,33 @@ static int searchFreeVoice(void);
 static float getFreqByNote(int note);
 
 static void lfoUpdate(void);
+static void lfoModulations(void);
 
 static volatile unsigned int synthWaveform;
 static volatile DDSInfo ddsInfo[VOICES_LEN];
 static volatile signed int voices[VOICES_LEN];
 static volatile unsigned int n[VOICES_LEN];
-//_________________________________
+
+// LFO
+#define LFO_WAVE_TYPE_SINE        4
+#define LFO_WAVE_TYPE_TRIANGLE    3
+#define LFO_WAVE_TYPE_EXP         2
+#define LFO_WAVE_TYPE_SQUARE      1
+#define LFO_WAVE_TYPE_RANDOM      0
+
+#define INC_RANDOM_COUNTER()  {randomCounter++; if(randomCounter>=(RANDOM_TABLE_SIZE-1)) randomCounter=0;}
+
+static volatile unsigned short randomCounter=0;
+static volatile int lfoCounter=0;
+static volatile int lfoFreqMultiplier=40;
+static volatile int lfoSampleAndHoldNewSampleFlag=0;
+static volatile int lfoSampleAndHoldValue;
+static volatile int lfoOn=0;
+static volatile int lfoWaitZero=1;
+static volatile int lfoWaveType=LFO_WAVE_TYPE_SINE;
+static volatile int lfoSignedValue;
+static volatile int lfoAmplitudeAmt=0;
+
 
 //___________________________________________________________________________________________________________________________
 
@@ -113,6 +134,7 @@ int dco_getWaveForm(void)
 
 int dco_setNote(int note, int vel)
 {
+    INC_RANDOM_COUNTER();
   
     if(note<MIDI_C1_NOTE)
         return -1;
@@ -149,8 +171,6 @@ void dco_disableVoice(int index)
 
 static void dcoUpdateForWaveSamples(void)
 {
-    //digitalWrite(24, HIGH);
-  
     // Generate waveform
     dcoUpdateSamples();
 
@@ -160,7 +180,6 @@ static void dcoUpdateForWaveSamples(void)
       pwmm_setValuePwmFast(i,(voices[i]>>4));
     //_________  
 
-    //digitalWrite(24, LOW);
 }
 
 inline static void dcoUpdateSamples(void)
@@ -174,16 +193,6 @@ inline static void dcoUpdateSamples(void)
             voices[i] = PWM_FAST_MAX_VALUE/2;
             continue;
         } 
-/*
-        ddsInfo[i].counter++;
-        if(ddsInfo[i].counter>=ddsInfo[i].counterMax)
-        {
-            ddsInfo[i].counter=0;
-            n[i]+=(ddsInfo[i].delta*2);
-        }
-        else
-          n[i]+=ddsInfo[i].delta;
-*/
 
         n[i]+=ddsInfo[i].delta;
         
@@ -206,6 +215,8 @@ static void dcoUpdateForADSRs(void)
         lfoUpdate();
         lfoDivider=0;
     }
+
+    INC_RANDOM_COUNTER();
 }
 
 
@@ -223,22 +234,9 @@ static float getFreqByNote(int note)
 {
     return NOTES_FREQ_TABLE[note];
 }
-
+   
 
 // LFO management ************************************************************************************
-#define LFO_WAVE_TYPE_SINE        4
-#define LFO_WAVE_TYPE_TRIANGLE    3
-#define LFO_WAVE_TYPE_EXP         2
-#define LFO_WAVE_TYPE_SQUARE      1
-#define LFO_WAVE_TYPE_RANDOM      0
-
-static int lfoCounter=0;
-static int lfoFreqMultiplier=40;
-static int lfoSampleAndHoldNewSampleFlag=0;
-static int lfoOn=1;
-static int lfoWaitZero=1;
-static int lfoWaveType=LFO_WAVE_TYPE_SINE;
-
 
 static void lfoUpdate(void)
 {
@@ -266,15 +264,13 @@ static void lfoUpdate(void)
         else
           val = 0;
         break;
-      case LFO_WAVE_TYPE_RANDOM:
-      /*
+      case LFO_WAVE_TYPE_RANDOM:      
         if(lfoSampleAndHoldNewSampleFlag==1) // sample new value
         {
           lfoSampleAndHoldValue = RANDOMTABLE[randomCounter]; // hold value
           lfoSampleAndHoldNewSampleFlag = 0;
         } 
-        val = lfoSampleAndHoldValue ; 
-       */ 
+        val = lfoSampleAndHoldValue ;  
         break;
     }
   
@@ -293,9 +289,7 @@ static void lfoUpdate(void)
     }
     pwmm_setValuePwmSlow(PWM_SLOW_7,val); // set lfo PWM 
     
-  
-    //int midiVal = (val*128) / 512;
-    //val = val - (512/2); // convert to signed value
+    lfoSignedValue = ((int)val) - (PWM_MAX_VALUE>>1);  
     
 }
 void dco_lfoOn(void)
@@ -332,6 +326,20 @@ void dco_setLfoWaveForm(int wf)
 {
     lfoWaveType = wf;
 }
+
+int dco_getLfoSignedValue(void)
+{
+    return lfoSignedValue;
+}
+int dc0_getLfoAmplitudeAmt(void)
+{
+    return lfoAmplitudeAmt;
+}
+int dc0_setLfoAmplitudeAmt(int val)
+{
+    lfoAmplitudeAmt = val;
+}
+
 
 //___________________________________________________________________________________________________________________________
 
