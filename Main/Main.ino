@@ -63,6 +63,13 @@ void loop() {
       frontp_loop();
 
       menu_loop();
+
+      if(adsr_areAllIdle())
+      {
+          // turn off LFO
+          dco_lfoOff();
+      }
+    
   }
 }
 

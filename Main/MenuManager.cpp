@@ -11,6 +11,8 @@ char* MAIN_MENU_TXTS[]= {"SAMPLES SYNTH","DRUM MACHINE","CLASSIC SYNTH","CONFIG"
 char* SAMPLES_NAMES_TXTS[]= {"CASIO_MT600","MARIMBA","GUITAR 12STR","FUSION BASS"};
 #define SAMPLES_NAMES_TXTS_LEN  4
 
+char* LFO_WAVEFORM_NAMES[]= {"Random","Square","Exponential","Triangle","Sine"};
+
 
 U8G2_SH1106_128X64_NONAME_F_4W_HW_SPI display(U8G2_R0, /* cs=*/ 49, /* dc=*/ 51, /* reset=*/ 53);
 static int mainMenuState;
@@ -253,8 +255,30 @@ static void samplesSynthMainScreenManager(void)
     }
     else
     {
-         // Modify ADSR2 (for filter)
+         // LFO settegins
+          val = frontp_getEncoderPosition(0);
+          if(val>30){
+              val=30;
+              frontp_setEncoderPosition(0,val);
+          }
+          else if(val<0)
+          {
+              val=0;
+              frontp_setEncoderPosition(0,val);
+          }          
+          dco_setLfoFreq(val);
 
+          val = frontp_getEncoderPosition(1);
+          if(val>4){
+              val=4;
+              frontp_setEncoderPosition(1,val);
+          }
+          else if(val<0)
+          {
+              val=0;
+              frontp_setEncoderPosition(1,val);
+          }          
+          dco_setLfoWaveForm(val);          
     }
 }
 
@@ -338,8 +362,8 @@ static void showSamplesSynthMainScreen(int selectedItem)
           sprintf(txtAdsr1,"ADSR1 SETTINGS%s",txtAdsrSlow);
           sprintf(txtAdsr0,"%03d %03d %03d %03d",adsr_getMidiAttackRate(0),adsr_getMidiDecayRate(0),adsr_getMidiSustainValue(0),adsr_getMidiReleaseRate(0));        
       }
-      sprintf(txtLFOLine0,"%02dHz",30);
-      sprintf(txtLFOLine1,"WAVEFORM:%s","Triangle");
+      sprintf(txtLFOLine0,"%02dHz",dco_getLfoFrq());
+      sprintf(txtLFOLine1,"WAVEFORM:%s",LFO_WAVEFORM_NAMES[dco_getLfoWaveForm()]);
       sprintf(txtLFOLine2,"AMT:%03d",100);
       
       // Display update spi: 12ms 

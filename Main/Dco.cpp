@@ -72,6 +72,8 @@ inline static void dcoUpdateSamples(void);
 static int searchFreeVoice(void);
 static float getFreqByNote(int note);
 
+static void lfoUpdate(void);
+
 static volatile unsigned int synthWaveform;
 static volatile DDSInfo ddsInfo[VOICES_LEN];
 static volatile signed int voices[VOICES_LEN];
@@ -130,13 +132,14 @@ int dco_setNote(int note, int vel)
         ddsInfo[indexFreeVoice].enabled = 1;
 
         adsr_triggerEvent(indexFreeVoice, vel);
+
+        dco_lfoOn();
     }
     return indexFreeVoice;
 }
 void dco_releaseVoice(int voice)
 {
     adsr_gateOffEvent(voice);
-
 }
 
 void dco_disableVoice(int index)
@@ -192,10 +195,17 @@ inline static void dcoUpdateSamples(void)
 }
 
 
-
+static int lfoDivider=0;
 static void dcoUpdateForADSRs(void)
 {
     adsr_stateMachineTick(); 
+
+    lfoDivider++;
+    if(lfoDivider>10)
+    {
+        lfoUpdate();
+        lfoDivider=0;
+    }
 }
 
 
@@ -213,6 +223,118 @@ static float getFreqByNote(int note)
 {
     return NOTES_FREQ_TABLE[note];
 }
+
+
+// LFO management ************************************************************************************
+#define LFO_WAVE_TYPE_SINE        4
+#define LFO_WAVE_TYPE_TRIANGLE    3
+#define LFO_WAVE_TYPE_EXP         2
+#define LFO_WAVE_TYPE_SQUARE      1
+#define LFO_WAVE_TYPE_RANDOM      0
+
+static int lfoCounter=0;
+static int lfoFreqMultiplier=40;
+static int lfoSampleAndHoldNewSampleFlag=0;
+static int lfoOn=1;
+static int lfoWaitZero=1;
+static int lfoWaveType=LFO_WAVE_TYPE_SINE;
+
+
+static void lfoUpdate(void)
+{
+    lfoCounter += lfoFreqMultiplier;
+    if (lfoCounter >= LFO_TABLE_SIZE) {
+      lfoCounter = lfoCounter - LFO_TABLE_SIZE;
+      lfoSampleAndHoldNewSampleFlag = 1;  
+    }
+  
+    int val;
+    switch (lfoWaveType)
+    {
+      case LFO_WAVE_TYPE_SINE:
+        val = SINETABLE[lfoCounter];
+        break;
+      case LFO_WAVE_TYPE_TRIANGLE:
+        val = TRIANGLETABLE[lfoCounter] ;
+        break;
+      case LFO_WAVE_TYPE_EXP:
+        val = EXPTABLE[lfoCounter] ;
+        break;
+      case LFO_WAVE_TYPE_SQUARE:
+        if (lfoCounter < (LFO_TABLE_SIZE / 2))
+          val = PWM_MAX_VALUE;
+        else
+          val = 0;
+        break;
+      case LFO_WAVE_TYPE_RANDOM:
+      /*
+        if(lfoSampleAndHoldNewSampleFlag==1) // sample new value
+        {
+          lfoSampleAndHoldValue = RANDOMTABLE[randomCounter]; // hold value
+          lfoSampleAndHoldNewSampleFlag = 0;
+        } 
+        val = lfoSampleAndHoldValue ; 
+       */ 
+        break;
+    }
+  
+    if(val>PWM_MAX_VALUE)
+      val = PWM_MAX_VALUE;
+
+    if(lfoOn==0)
+    {
+        if(lfoWaitZero)
+        {
+            if(val<=0)
+              lfoWaitZero=0;
+        }
+        else
+          val = 0;      
+    }
+    pwmm_setValuePwmSlow(PWM_SLOW_7,val); // set lfo PWM 
+    
+  
+    //int midiVal = (val*128) / 512;
+    //val = val - (512/2); // convert to signed value
+    
+}
+void dco_lfoOn(void)
+{
+  if(lfoOn==0)
+  {
+      lfoCounter=0;
+  }
+  
+  lfoOn=1;
+  lfoWaitZero=0;
+}
+void dco_lfoOff(void)
+{
+  if(lfoOn)
+  {
+    lfoWaitZero=1;  
+    lfoOn=0;
+  }
+}
+void dco_setLfoFreq(int freq)
+{
+    lfoFreqMultiplier = freq;
+}
+int dco_getLfoFrq(void)
+{
+    return lfoFreqMultiplier;
+}
+int dco_getLfoWaveForm(void)
+{
+    return lfoWaveType;
+}
+void dco_setLfoWaveForm(int wf)
+{
+    lfoWaveType = wf;
+}
+
+//___________________________________________________________________________________________________________________________
+
 // ********************************************** PWM Management ************************************************************
 void pwmm_init(void)
 {

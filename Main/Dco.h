@@ -10,5 +10,15 @@ void pwmm_setValuePwmSlow(unsigned char index,unsigned int value);
 void dco_setWaveForm(int wf);
 int dco_getWaveForm(void);
 
+void dco_lfoOn(void);
+void dco_lfoOff(void);
+void dco_setLfoFreq(int freq);
+int dco_getLfoFrq(void);
+
+int dco_getLfoWaveForm(void);
+void dco_setLfoWaveForm(int wf);
+
+
+
 #define PWM_FAST_MAX_VALUE 572
 

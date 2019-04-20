@@ -78,8 +78,9 @@ void adsr_gateOnEvent(void)
 {
 
 }
-void adsr_gateOffEvent(int index)
+int adsr_gateOffEvent(int index)
 {
+    int ret=0;
     // release index voice
     releaseRateCounter[index] = releaseRate[index];
     state[index] = STATE_RELEASE;
@@ -100,8 +101,10 @@ void adsr_gateOffEvent(int index)
     {
         releaseRateCounter[ADSR_FOR_VCF] = releaseRate[ADSR_FOR_VCF];
         state[ADSR_FOR_VCF] = STATE_RELEASE;
+        ret=1;
     }
     //____________________________________________
+    return ret;
 }
 
 void adsr_triggerEvent(int index, int vel) // vel can be used to modulate attack rate
@@ -324,5 +327,23 @@ void adsr_setVcfMode(int mode)
 int adsr_getVcfMode(void)
 {
     return adsrVcfMode;
+}
+
+int adsr_areAllIdle(void)
+{
+    int flagBusyVoice=0;
+    int i;
+    for(i=0; i<ADSR_LEN; i++)
+    {
+        if(state[i]!=STATE_IDLE)
+        {
+            flagBusyVoice=1;
+            break;
+        }
+    }
+    if(flagBusyVoice)
+      return 0;
+
+    return 1;
 }
 
