@@ -37,18 +37,23 @@ void midircv_stateMachine(void)
   unsigned char data;
   int c;
 
-  c = Serial2.readBytes(&data,1); // 12uS
-  if(c>0)
-  {              
-    bufferMidiExternalKeyboard[indexBufferExternal] = data;
-    indexBufferExternal++;
-    if(indexBufferExternal==3)
-    {
-      MidiInfo midiInfo;
-      processMidiPacket(bufferMidiExternalKeyboard,indexBufferExternal,FROM_EXTERNAL_KEYBOARD,&midiInfo);
-      midi_analizeMidiInfo(&midiInfo);      
-      indexBufferExternal=0;
-    }
+  while(1)
+  {
+      c = Serial2.readBytes(&data,1); // 12uS
+      if(c>0)
+      {              
+        bufferMidiExternalKeyboard[indexBufferExternal] = data;
+        indexBufferExternal++;
+        if(indexBufferExternal==3)
+        {
+          MidiInfo midiInfo;
+          processMidiPacket(bufferMidiExternalKeyboard,indexBufferExternal,FROM_EXTERNAL_KEYBOARD,&midiInfo);
+          midi_analizeMidiInfo(&midiInfo);      
+          indexBufferExternal=0;
+        }
+      }
+      else
+        break;
   }
 }
 
