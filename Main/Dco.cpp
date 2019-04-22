@@ -91,14 +91,14 @@ static volatile unsigned int n[VOICES_LEN];
 
 static volatile unsigned short randomCounter=0;
 static volatile int lfoCounter=0;
-static volatile int lfoFreqMultiplier=40;
+static volatile int lfoFreqMultiplier=30;
 static volatile int lfoSampleAndHoldNewSampleFlag=0;
 static volatile int lfoSampleAndHoldValue;
 static volatile int lfoOn=0;
 static volatile int lfoWaitZero=1;
 static volatile int lfoWaveType=LFO_WAVE_TYPE_SINE;
 static volatile int lfoSignedValue;
-static volatile int lfoAmplitudeAmt=30;
+static volatile int lfoAmplitudeAmt=25;
 
 
 //___________________________________________________________________________________________________________________________

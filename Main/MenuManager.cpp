@@ -46,13 +46,10 @@ void menu_init(void)
 
 void menu_loop(void)
 {
-    static int mainSelectedItem0=-1;
-
     if(frontp_getSwState(SW_SHIFT)==FRONT_PANEL_SW_STATE_JUST_PRESSED || frontp_getSwState(SW_SHIFT)==FRONT_PANEL_SW_STATE_LONG)
         shiftActive = 1;
     else
         shiftActive = 0;
-
 
     
     switch(mainMenuState)
@@ -73,11 +70,8 @@ void menu_loop(void)
             }
             //________________________________
 
-            if(mainSelectedItem!=mainSelectedItem0)
-            {               
-                printList(MAIN_MENU_TXTS,MAIN_MENU_TXTS_LEN,mainSelectedItem);  
-                mainSelectedItem0=mainSelectedItem;
-            }
+            printList(MAIN_MENU_TXTS,MAIN_MENU_TXTS_LEN,mainSelectedItem);  
+
             if(frontp_getSwState(SW_ENTER)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
             {
                 frontp_resetSwState(SW_ENTER);
@@ -95,7 +89,6 @@ void menu_loop(void)
         {
             // Read selected item from encoder
             int val = frontp_getEncoderPosition(0);
-            static int val0=-1;
             if(val<0)
             {
                 val = 0;
@@ -109,11 +102,7 @@ void menu_loop(void)
             dco_setWaveForm(val);
             //________________________________
 
-            if(val!=val0)
-            {
-                val0=val;          
-                showSamplesSinthScreen();
-            }
+            showSamplesSinthScreen();
 
             if(frontp_getSwState(SW_ENTER)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
             {
@@ -126,6 +115,12 @@ void menu_loop(void)
                 frontp_setEncoderPosition(2,adsr_getMidiSustainValue(0));
                 frontp_setEncoderPosition(3,adsr_getMidiReleaseRate(0));
                 //_____________________
+            }
+            if(frontp_getSwState(SW_BACK)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
+            {
+                frontp_resetSwState(SW_BACK);
+                mainMenuState = STATE_MAIN;
+                frontp_setEncoderPosition(0,0);
             }
             
             // Mini piano test
@@ -163,7 +158,7 @@ static void samplesSynthMainScreenManager(void)
     if(frontp_getSwState(SW_BACK)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
     {
         frontp_resetSwState(SW_BACK);
-        frontp_setEncoderPosition(0,-1); 
+        frontp_setEncoderPosition(0,dco_getWaveForm()); 
         mainMenuState = STATE_SAMPLES_SYNTH;
         selectedItem = 0;
         return;
