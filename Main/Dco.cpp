@@ -98,7 +98,7 @@ static volatile int lfoOn=0;
 static volatile int lfoWaitZero=1;
 static volatile int lfoWaveType=LFO_WAVE_TYPE_SINE;
 static volatile int lfoSignedValue;
-static volatile int lfoAmplitudeAmt=0;
+static volatile int lfoAmplitudeAmt=30;
 
 
 //___________________________________________________________________________________________________________________________

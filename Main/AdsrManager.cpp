@@ -177,8 +177,20 @@ int adsr_getFreeAdsr(int indexMax)
 
 static void setAdsrPwmValue(int i, int value)
 {
+    // LFO Modulation
+    if(i<ADSR_VOICES_LEN)
+    {
+        value = value + ((dco_getLfoSignedValue()*dc0_getLfoAmplitudeAmt())/100);
+    }
+    //_______________
+
+    // Limits
     if(value>PWM_MAX_VALUE)
       value=PWM_MAX_VALUE;
+    else if(value<0)
+      value=0;  
+    //_______
+
 
     pwmm_setValuePwmSlow(i,(unsigned int)value);
 }
@@ -220,7 +232,7 @@ void adsr_stateMachineTick(void) // freq update: 14,4Khz
             decayRateCounter[i] = decayRate[i];
             state[i] = STATE_DECAY;
           }
-          setAdsrPwmValue(i,adsrValue[i]);
+          //setAdsrPwmValue(i,adsrValue[i]);
         }
         break;
       }
@@ -237,7 +249,7 @@ void adsr_stateMachineTick(void) // freq update: 14,4Khz
             adsrValue[i] = sustainValue[i];
             state[i] = STATE_SUSTAIN;  
           }
-          setAdsrPwmValue(i,adsrValue[i]);        
+          //setAdsrPwmValue(i,adsrValue[i]);        
         }
         break;
       }
@@ -265,11 +277,13 @@ void adsr_stateMachineTick(void) // freq update: 14,4Khz
               //Serial.print("\n"); 
           }
           
-          setAdsrPwmValue(i,adsrValue[i]);                
+          //setAdsrPwmValue(i,adsrValue[i]);                
         }
         break;
       }
     }
+
+    setAdsrPwmValue(i,adsrValue[i]);
   }
 }
 

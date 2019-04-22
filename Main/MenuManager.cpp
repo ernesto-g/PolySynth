@@ -148,8 +148,16 @@ static void samplesSynthMainScreenManager(void)
     int val;
     int i;
     static int selectedItem=0;
+    static int flagReloadEncoders=0;
+    static int shiftActive0=-1;
   
     showSamplesSynthMainScreen(selectedItem);
+
+    if(shiftActive!=shiftActive0)
+    {
+        shiftActive0=shiftActive;
+        flagReloadEncoders=1;
+    }
 
     // controls
     if(frontp_getSwState(SW_BACK)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
@@ -167,7 +175,9 @@ static void samplesSynthMainScreenManager(void)
          frontp_resetSwState(SW_MI);
          selectedItem++;
          if(selectedItem>=2)
-          selectedItem=0;        
+          selectedItem=0;  
+
+         flagReloadEncoders=1;
     }
 
     // adsr fast/slow
@@ -195,6 +205,24 @@ static void samplesSynthMainScreenManager(void)
 
     if(selectedItem==0)
     {
+          if(flagReloadEncoders)
+          {
+              flagReloadEncoders=0;
+              if(shiftActive==0)
+              {
+                  frontp_setEncoderPosition(0,adsr_getMidiAttackRate(0));
+                  frontp_setEncoderPosition(1,adsr_getMidiDecayRate(0));
+                  frontp_setEncoderPosition(2,adsr_getMidiSustainValue(0));
+                  frontp_setEncoderPosition(3,adsr_getMidiReleaseRate(0));
+              }
+              else
+              {
+                  frontp_setEncoderPosition(0,adsr_getMidiAttackRate(6));
+                  frontp_setEncoderPosition(1,adsr_getMidiDecayRate(6));
+                  frontp_setEncoderPosition(2,adsr_getMidiSustainValue(6));
+                  frontp_setEncoderPosition(3,adsr_getMidiReleaseRate(6));                
+              }
+          }
           // Modify ADSR1 (for voices amplitude)
           
           // update attack value
@@ -207,8 +235,15 @@ static void samplesSynthMainScreenManager(void)
               val=0;
               frontp_setEncoderPosition(0,val);          
           }
-          for(i=0; i<6;i++)
-            adsr_setMidiAttackRate(i,val); // attack for voices
+          if(shiftActive==0)
+          {
+            for(i=0; i<6;i++)
+              adsr_setMidiAttackRate(i,val); // attack for voices
+          }
+          else
+          {
+              adsr_setMidiAttackRate(6,val); // attack for VCF            
+          }
           //_____________________      
           
           // update decay value
@@ -221,8 +256,13 @@ static void samplesSynthMainScreenManager(void)
               val=0;
               frontp_setEncoderPosition(1,val);          
           }
-          for(i=0; i<6;i++)
-            adsr_setMidiDecayRate(i,val); // decay for voices
+          if(shiftActive==0)
+          {
+              for(i=0; i<6;i++)
+                adsr_setMidiDecayRate(i,val); // decay for voices
+          }
+          else
+            adsr_setMidiDecayRate(6,val); // decay for vcf
           //_____________________      
           
           // update sustain value
@@ -235,8 +275,13 @@ static void samplesSynthMainScreenManager(void)
               val=0;
               frontp_setEncoderPosition(2,val);          
           }
-          for(i=0; i<6;i++)
-            adsr_setMidiSustainValue(i,val); // sustain for voices
+          if(shiftActive==0)
+          {
+              for(i=0; i<6;i++)
+                adsr_setMidiSustainValue(i,val); // sustain for voices
+          }
+          else
+            adsr_setMidiSustainValue(6,val); // sustain for vcf
           //_____________________     
       
           // update release value
@@ -249,12 +294,25 @@ static void samplesSynthMainScreenManager(void)
               val=0;
               frontp_setEncoderPosition(3,val);          
           }
-          for(i=0; i<6;i++)
-            adsr_setMidiReleaseRate(i,val); // release for voices
+          if(shiftActive==0)
+          {
+            for(i=0; i<6;i++)
+              adsr_setMidiReleaseRate(i,val); // release for voices
+          }
+          else
+            adsr_setMidiReleaseRate(6,val); // release for voices
           //_____________________      
     }
     else
     {
+          if(flagReloadEncoders)
+          {
+              flagReloadEncoders=0;
+              frontp_setEncoderPosition(0,dco_getLfoFrq());
+              frontp_setEncoderPosition(1,dco_getLfoWaveForm());
+              frontp_setEncoderPosition(2,dc0_getLfoAmplitudeAmt());
+          }
+                
          // LFO settegins
           val = frontp_getEncoderPosition(0);
           if(val>30){
@@ -278,7 +336,19 @@ static void samplesSynthMainScreenManager(void)
               val=0;
               frontp_setEncoderPosition(1,val);
           }          
-          dco_setLfoWaveForm(val);          
+          dco_setLfoWaveForm(val);    
+
+          val = frontp_getEncoderPosition(2);
+          if(val>100){
+              val=100;
+              frontp_setEncoderPosition(2,val);
+          }
+          else if(val<0)
+          {
+              val=0;
+              frontp_setEncoderPosition(2,val);
+          }          
+          dc0_setLfoAmplitudeAmt(val);                  
     }
 }
 
@@ -364,7 +434,7 @@ static void showSamplesSynthMainScreen(int selectedItem)
       }
       sprintf(txtLFOLine0,"%02dHz",dco_getLfoFrq());
       sprintf(txtLFOLine1,"WAVEFORM:%s",LFO_WAVEFORM_NAMES[dco_getLfoWaveForm()]);
-      sprintf(txtLFOLine2,"AMT:%03d",100);
+      sprintf(txtLFOLine2,"AMT:%03d",dc0_getLfoAmplitudeAmt());
       
       // Display update spi: 12ms 
       display.firstPage();
