@@ -2,7 +2,7 @@
 #include <HardwareSerial.h>
 #include "MIDIReception.h"
 #include "MIDIManager.h"
-//#include "SequencerManager.h"
+#include "SequencerManager.h"
 
 // USB MIDI lib
 //#include "MIDIUSB/MIDIUSB.h"
@@ -83,7 +83,7 @@ static void processMidiPacket(unsigned char* pData, int len, int fromKeyboard,Mi
   //_________________
 
   // Send to sequencer manager
-  //seq_keyEvent(pMidiInfo);
+  seq_keyEvent(pMidiInfo);
   //__________________________      
 }
 

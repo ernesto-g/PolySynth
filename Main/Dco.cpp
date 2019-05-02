@@ -169,6 +169,14 @@ void dco_disableVoice(int index)
     ddsInfo[index].enabled=0;
 }
 
+void dco_releaseAllVoices(void)
+{
+      int i;
+    for(i=0;i<VOICES_LEN; i++)
+      dco_releaseVoice(i);      
+}
+
+
 static void dcoUpdateForWaveSamples(void)
 {
     // Generate waveform

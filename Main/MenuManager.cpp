@@ -4,9 +4,11 @@
 #include "FrontPanel.h"
 #include "Dco.h"
 #include "AdsrManager.h"
+#include "MIDIReception.h"
+#include "SequencerManager.h"
 
-char* MAIN_MENU_TXTS[]= {"SAMPLES SYNTH","DRUM MACHINE","CLASSIC SYNTH","CONFIG"};
-#define MAIN_MENU_TXTS_LEN  4
+char* MAIN_MENU_TXTS[]= {"SAMPLES SYNTH","DRUM MACHINE","CLASSIC SYNTH","SEQUENCER","CONFIG"};
+#define MAIN_MENU_TXTS_LEN  5
 
 char* SAMPLES_NAMES_TXTS[]= {"CASIO_MT600","MARIMBA","GUITAR 12STR","FUSION BASS"};
 #define SAMPLES_NAMES_TXTS_LEN  4
@@ -19,21 +21,26 @@ static int mainMenuState;
 static int mainSelectedItem;
 static int shiftActive=0;
 
-
+// Private functions
 static void printList(char* pList[],int listLen,int selectedItem);
 static void showSamplesSinthScreen(void);
 static void showSamplesSynthMainScreen(int selectedItem);
-static void miniPianoTest(void);
-static void samplesSynthMainScreenManager(void);
+static void showSequencerMainScreen(void);
 
+static void miniPianoTest(void);
+
+static void samplesSynthMainScreenManager(void);
+static void sequencerMainScreenManager(void);
+//___________________
 
 
 #define STATE_MAIN          0
 #define STATE_SAMPLES_SYNTH 1
 #define STATE_DRUM_MACHINE  2
 #define STATE_CLASSIC_SYNTH 3
-#define STATE_CONFIG        4
-#define STATE_SAMPLES_SYNTH_MAIN_SCREEN 5
+#define STATE_SEQUENCER     4
+#define STATE_CONFIG        5
+#define STATE_SAMPLES_SYNTH_MAIN_SCREEN 6
 
 
 void menu_init(void)
@@ -80,7 +87,8 @@ void menu_loop(void)
                     case 0: mainMenuState = STATE_SAMPLES_SYNTH;frontp_setEncoderPosition(0,0);break;
                     case 1: mainMenuState = STATE_DRUM_MACHINE;break;
                     case 2: mainMenuState = STATE_CLASSIC_SYNTH;break;
-                    case 3: mainMenuState = STATE_CONFIG;break;
+                    case 3: mainMenuState = STATE_SEQUENCER; frontp_setEncoderPosition(0,seq_getBpmRate()); break;
+                    case 4: mainMenuState = STATE_CONFIG;break;
                 }
             }
             break;
@@ -126,6 +134,11 @@ void menu_loop(void)
             // Mini piano test
             miniPianoTest();
         
+            break;
+        }
+        case STATE_SEQUENCER:
+        {
+            sequencerMainScreenManager();
             break;
         }
         case STATE_SAMPLES_SYNTH_MAIN_SCREEN:
@@ -348,6 +361,72 @@ static void samplesSynthMainScreenManager(void)
 }
 
 
+static void sequencerMainScreenManager(void)
+{
+    int val;
+    int i;
+    static int flagReloadEncoders=0;
+    static int shiftActive0=-1;
+  
+    showSequencerMainScreen();
+
+    if(shiftActive!=shiftActive0)
+    {
+        shiftActive0=shiftActive;
+        flagReloadEncoders=1;
+    }
+    if(frontp_getSwState(SW_BACK)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
+    {
+        frontp_resetSwState(SW_BACK);
+        frontp_setEncoderPosition(0,3);
+        mainMenuState = STATE_MAIN;
+        return;
+    }
+    
+
+    // Change sequencer mode (play/record/off)
+    if(frontp_getSwState(SW_MI)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
+    {
+          frontp_resetSwState(SW_MI);
+          int s = seq_getState();
+          s++;
+          if(s>SEQ_STATE_RECORD)
+            s = SEQ_STATE_OFF;  
+          seq_setState(s);       
+    } 
+
+    // next step (no implemented yet)
+    if(frontp_getSwState(SW_OJ)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
+    {
+          frontp_resetSwState(SW_OJ);
+          //seq_nextStep();
+    } 
+    
+    // rest
+    if(frontp_getSwState(SW_PK)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
+    {
+          frontp_resetSwState(SW_PK);
+          seq_tapRestEvent();
+    } 
+    
+    // BPM value
+    val = frontp_getEncoderPosition(0);
+    if(val>350) {
+        val=350;
+        frontp_setEncoderPosition(0,val);    
+    }
+    else if(val <0) {
+        val=0;
+        frontp_setEncoderPosition(0,val);          
+    }
+    seq_setBpmRate(val);
+    //_________
+
+              
+}
+
+
+
 
 static void printList(char* pList[],int listLen,int selectedItem)
 {
@@ -468,6 +547,58 @@ static void showSamplesSynthMainScreen(int selectedItem)
       while(display.nextPage()); 
       //__________________________   
 }
+
+static void showSequencerMainScreen(void)
+{
+      char txtSteps[32];
+      char txtSync[32];
+      char txtBpm[32];
+      char play[2]={0x45,0};
+      char record[2]={0x46,0};
+      char next[2]={0x4A,0};
+      char rest[2]={0x44,0};
+      char stopTxt[2]={0x4B,0};
+
+      sprintf(txtSteps,"STEP:%02d",seq_getCurrentRecordStep());
+      sprintf(txtSync,"SYNC:%s","INT");
+      sprintf(txtBpm,"BPM:%03d",seq_getBpmRate());
+                
+      // Display update spi: 12ms 
+      display.firstPage();
+      do 
+      {
+          display.setFont(u8g2_font_5x8_tf); 
+          display.drawStr(0, 8, "SEQUENCER"); 
+          if(shiftActive==1)
+            display.drawStr(116, 8, "sh"); 
+          display.drawLine(0, 8, 127, 8); // line separator
+
+          display.setFont(u8g2_font_6x13_tf); 
+          display.drawStr(0, 56, txtSync); // sync type 
+
+          display.setFont(u8g2_font_8x13B_tf); 
+          display.drawStr(0, 21, txtSteps); // Step value
+          display.drawStr(70, 56, txtBpm); // Bpm value 
+         
+          // buttons
+          display.setFont(u8g2_font_open_iconic_play_2x_t);
+          if(seq_getState()==SEQ_STATE_PLAY)
+            display.drawStr(10, 41, play);
+          else if(seq_getState()==SEQ_STATE_RECORD)
+            display.drawStr(10, 41, record);
+          else if(seq_getState()==SEQ_STATE_OFF)
+            display.drawStr(10, 41, stopTxt);
+                     
+          display.drawStr(52, 41, next); 
+          display.setFont(u8g2_font_open_iconic_check_2x_t);          
+          display.drawStr(96, 41, rest); 
+          //________                   
+
+      }
+      while(display.nextPage()); 
+      //__________________________   
+}
+
 
 
 static void miniPianoTest(void)

@@ -68,6 +68,23 @@ void midi_voiceFinishedEvent(int voice) // adsr freed a voice, simulate key rele
     }
 }
 
+void midi_clearAllKeysPressed(void)
+{
+  byte i;
+  for(i=0; i<KEYS_PRESSED_LEN; i++)
+  {
+    if(keysPressed[i].flagFree==0)
+    {
+        keysPressed[i].flagFree=1;
+    }
+  } 
+
+  for(i=0; i<KEYS_PRESSED_LEN; i++)
+  {
+      dco_releaseAllVoices();
+  }
+}
+
 /// Keys management
 static int saveKey(int note, int voice)
 {

@@ -19,6 +19,7 @@ void dco_setLfoWaveForm(int wf);
 int dco_getLfoSignedValue(void);
 int dc0_getLfoAmplitudeAmt(void);
 int dc0_setLfoAmplitudeAmt(int val);
+void dco_releaseAllVoices(void);
 
 
 

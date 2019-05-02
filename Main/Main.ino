@@ -11,6 +11,7 @@
 #include "MIDIManager.h"
 #include "FrontPanel.h"
 #include "Memory.h"
+#include "SequencerManager.h"
 
 /**
  * COMPILATION NOTES
@@ -24,6 +25,7 @@
 void systick(void)
 {
      frontp_tick1Ms();
+     seq_sysTick();
 }
   
 void setup() {  
@@ -42,10 +44,11 @@ void setup() {
     midi_init();
     midircv_init();
     frontp_init();
+    seq_init();
 
     dco_setWaveForm(0);
 
-    Timer1.attachInterrupt(systick).setFrequency(1000).start(); // freq update: 1Khz . VER QUE NO ROMPA LOS PWM!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    Timer1.attachInterrupt(systick).setFrequency(1000).start(); // freq update: 1Khz 
 
     menu_init();
 
@@ -61,6 +64,8 @@ void loop() {
       midircv_stateMachine();
 
       frontp_loop();
+
+      seq_loop();
 
       menu_loop();
 
