@@ -2,13 +2,24 @@
 #include "MIDIManager.h"
 #include "SequencerManager.h"
 
-#define STEPS_LEN   64
-#define TRACKS_LEN  4
-#define TRACK_0     0
+#define STEPS_LEN         64
+#define TRACKS_LEN        4
+#define TRACK_0           0
+#define VOICES_IN_STEP    6
 
 #define ST_REC_WAIT_KEY 0
 
 #define SEC_TO_TICK(S)  (S*1000)
+
+struct S_SeqStepInfo
+{
+    MidiInfo notes[VOICES_IN_STEP];
+    short int recIndex;
+    short int playIndex;
+    unsigned char isSilence;
+};
+typedef struct S_SeqStepInfo  SeqStepInfo;
+
 
 static void recordStateMachine(void);
 static void playStateMachine(void);
@@ -19,10 +30,12 @@ static int stateRecord;
 static unsigned int tempo;
 static unsigned int currentTempoTicks;
 
-static MidiInfo tracks[TRACKS_LEN][STEPS_LEN];
+static SeqStepInfo tracks[TRACKS_LEN][STEPS_LEN];
 static int recordIndexes[TRACKS_LEN];
 static int playIndexes[TRACKS_LEN];
 static int maxIndexes[TRACKS_LEN];
+
+static int gateOnPercent;
 
 
 void seq_init(void)
@@ -32,6 +45,7 @@ void seq_init(void)
     stateRecord=ST_REC_WAIT_KEY;
     maxIndexes[TRACK_0] = 0;
     seq_setBpmRate(120);
+    seq_setGateOnPercent(SEQ_GATE_ON_PERCENT_50);
 }
 
 static volatile int tempoCounter;
@@ -51,20 +65,37 @@ void seq_keyEvent(MidiInfo* pMidiInfo)
     {
         if( (pMidiInfo->cmd==MIDI_CMD_NOTE_ON) && (recordIndexes[TRACK_0]<STEPS_LEN) )
         {
-            tracks[TRACK_0][recordIndexes[TRACK_0]] = *pMidiInfo;
-            maxIndexes[TRACK_0] = recordIndexes[TRACK_0];
-            recordIndexes[TRACK_0]++;
+            int index = tracks[TRACK_0][recordIndexes[TRACK_0]].recIndex;
+            if(index<VOICES_IN_STEP)
+            {
+              tracks[TRACK_0][recordIndexes[TRACK_0]].isSilence=0;
+              tracks[TRACK_0][recordIndexes[TRACK_0]].notes[index] = *pMidiInfo; // save note info in recIndex position
+              
+              maxIndexes[TRACK_0] = recordIndexes[TRACK_0]; // save playIndex step
+              tracks[TRACK_0][recordIndexes[TRACK_0]].playIndex = tracks[TRACK_0][recordIndexes[TRACK_0]].recIndex; // save playIndex note
+              
+              tracks[TRACK_0][recordIndexes[TRACK_0]].recIndex++; // inc recIndex for note
+            }
         }
     }
+}
+
+void seq_nextStepEvent(void)
+{
+    recordIndexes[TRACK_0]++;
+    tracks[TRACK_0][recordIndexes[TRACK_0]].recIndex=0;
 }
 
 void seq_tapRestEvent(void)
 {
     if(state==SEQ_STATE_RECORD && stateRecord==ST_REC_WAIT_KEY)
-    {
-        tracks[TRACK_0][recordIndexes[TRACK_0]].cmd = 0xFF; // -1 for silence
-        maxIndexes[TRACK_0] = recordIndexes[TRACK_0];
-        recordIndexes[TRACK_0]++;    
+    {        
+        //tracks[TRACK_0][recordIndexes[TRACK_0]].cmd = 0xFF; // -1 for silence
+        tracks[TRACK_0][recordIndexes[TRACK_0]].isSilence=1;
+        
+        maxIndexes[TRACK_0] = recordIndexes[TRACK_0]; // save playIndex step
+        
+        seq_nextStepEvent();   
     }  
 }
 
@@ -89,6 +120,17 @@ int seq_getCurrentRecordStep(void)
 {
     return recordIndexes[TRACK_0];
 }
+
+void seq_setGateOnPercent(int value)
+{
+    gateOnPercent = value;
+}
+int seq_getGateOnPercent(void)
+{
+    return gateOnPercent;
+}
+
+
 
 
 void seq_loop(void)
@@ -124,7 +166,10 @@ void seq_loop(void)
       {
           if(flagNewState==1)
           {
-              recordIndexes[TRACK_0]=0; // init record index to 0 
+              midi_clearAllKeysPressed(); // set dco off
+            
+              recordIndexes[TRACK_0]=0; // init record index to 0 (step 0)
+              tracks[TRACK_0][recordIndexes[TRACK_0]].recIndex=0;  // init rec index for notes to 0 (note 0)
           }
           recordStateMachine();
           break;
@@ -135,35 +180,51 @@ void seq_loop(void)
 static void playStateMachine(void)
 {
     MidiInfo* pmi;
+    int i;
+    int notesMax;
+    
     if(tempoCounter==0)
     {
         tempoCounter = currentTempoTicks;
-        pmi = &tracks[TRACK_0][playIndexes[TRACK_0]];
-        if(pmi->cmd!=0xFF)
+        if(tracks[TRACK_0][playIndexes[TRACK_0]].isSilence==0)
         {
-            pmi->cmd = MIDI_CMD_NOTE_ON;
-            midi_analizeMidiInfo(pmi);
+            notesMax = tracks[TRACK_0][playIndexes[TRACK_0]].playIndex;
+            for(i=0; i<=notesMax; i++)
+            {
+                    pmi = &tracks[TRACK_0][playIndexes[TRACK_0]].notes[i];
+                    pmi->cmd = MIDI_CMD_NOTE_ON;
+                    midi_analizeMidiInfo(pmi);
+            }
         }
-        timeoutRelease = tempoCounter/4; // 25% of tempo        
-        //outs_set(OUT_LED_SEQ_RATE,1); // led on
+        switch(gateOnPercent)
+        {
+            case SEQ_GATE_ON_PERCENT_25 :timeoutRelease = tempoCounter/4; break; // 25% of tempo          
+            case SEQ_GATE_ON_PERCENT_50 :timeoutRelease = tempoCounter/2; break; // 50% of tempo          
+            case SEQ_GATE_ON_PERCENT_75 :timeoutRelease = ((tempoCounter*3)/4); break; // 75% of tempo          
+            case SEQ_GATE_ON_PERCENT_90:timeoutRelease = ((tempoCounter*9)/10); break; // 90% of tempo          
+        }             
     }  
 
     if(timeoutRelease==0)
     {
-        timeoutRelease=-1;      
-        pmi = &tracks[TRACK_0][playIndexes[TRACK_0]];
-        if(pmi->cmd!=0xFF)
+        timeoutRelease=-1;    
+
+        if(tracks[TRACK_0][playIndexes[TRACK_0]].isSilence==0)
         {
-            pmi->cmd = MIDI_CMD_NOTE_OFF;
-            midi_analizeMidiInfo(pmi);
-        }
+            notesMax = tracks[TRACK_0][playIndexes[TRACK_0]].playIndex;
+            for(i=0; i<=notesMax; i++)
+            {
+                  pmi = &tracks[TRACK_0][playIndexes[TRACK_0]].notes[i];
+                  pmi->cmd = MIDI_CMD_NOTE_OFF;
+                  midi_analizeMidiInfo(pmi);
+            }
+        }        
         
         playIndexes[TRACK_0]++;
         if(playIndexes[TRACK_0]>maxIndexes[TRACK_0])
         {
             playIndexes[TRACK_0]=0;
         }        
-        //outs_set(OUT_LED_SEQ_RATE,0); // led off
     }
 }
 

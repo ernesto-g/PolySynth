@@ -395,11 +395,11 @@ static void sequencerMainScreenManager(void)
           seq_setState(s);       
     } 
 
-    // next step (no implemented yet)
+    // next step
     if(frontp_getSwState(SW_OJ)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
     {
           frontp_resetSwState(SW_OJ);
-          //seq_nextStep();
+          seq_nextStepEvent();
     } 
     
     // rest
@@ -408,6 +408,27 @@ static void sequencerMainScreenManager(void)
           frontp_resetSwState(SW_PK);
           seq_tapRestEvent();
     } 
+
+    // sync int type / gate on percent
+    if(frontp_getSwState(SW_QL)==FRONT_PANEL_SW_STATE_JUST_PRESSED)
+    {
+          frontp_resetSwState(SW_QL);
+          if(shiftActive)
+          {
+              val = seq_getGateOnPercent();
+              val++;
+              if(val>SEQ_GATE_ON_PERCENT_90)
+                  val = SEQ_GATE_ON_PERCENT_25;
+                  
+              seq_setGateOnPercent(val);
+          }
+          else
+          {
+              // TODO
+          }
+    }
+    
+    
     
     // BPM value
     val = frontp_getEncoderPosition(0);
@@ -558,10 +579,19 @@ static void showSequencerMainScreen(void)
       char next[2]={0x4A,0};
       char rest[2]={0x44,0};
       char stopTxt[2]={0x4B,0};
+      char gateOnTxt[16];
 
       sprintf(txtSteps,"STEP:%02d",seq_getCurrentRecordStep());
       sprintf(txtSync,"SYNC:%s","INT");
       sprintf(txtBpm,"BPM:%03d",seq_getBpmRate());
+      switch(seq_getGateOnPercent())
+      {
+          case SEQ_GATE_ON_PERCENT_25: sprintf(gateOnTxt,"Gate:25%%");break;
+          case SEQ_GATE_ON_PERCENT_50: sprintf(gateOnTxt,"Gate:50%%");break;
+          case SEQ_GATE_ON_PERCENT_75: sprintf(gateOnTxt,"Gate:75%%");break;
+          case SEQ_GATE_ON_PERCENT_90: sprintf(gateOnTxt,"Gate:90%%");break;
+      }
+      
                 
       // Display update spi: 12ms 
       display.firstPage();
@@ -572,6 +602,8 @@ static void showSequencerMainScreen(void)
           if(shiftActive==1)
             display.drawStr(116, 8, "sh"); 
           display.drawLine(0, 8, 127, 8); // line separator
+
+          display.drawStr(85, 18, gateOnTxt );
 
           display.setFont(u8g2_font_6x13_tf); 
           display.drawStr(0, 56, txtSync); // sync type 
