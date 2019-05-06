@@ -415,19 +415,25 @@ static void sequencerMainScreenManager(void)
           frontp_resetSwState(SW_QL);
           if(shiftActive)
           {
-              val = seq_getGateOnPercent();
+              // sync type selection
+              int val = seq_getExternalSyncType();
+              val++;
+              if(val>SEQ_SYNC_TYPE_MIDI)
+                val=SEQ_SYNC_TYPE_INTERNAL;
+                
+              seq_setExternalSyncType(val);
+          }
+          else
+          {
+              // gate on percent selection 
+              int val = seq_getGateOnPercent();
               val++;
               if(val>SEQ_GATE_ON_PERCENT_90)
                   val = SEQ_GATE_ON_PERCENT_25;
                   
-              seq_setGateOnPercent(val);
-          }
-          else
-          {
-              // TODO
+              seq_setGateOnPercent(val);     
           }
     }
-    
     
     
     // BPM value
@@ -581,8 +587,7 @@ static void showSequencerMainScreen(void)
       char stopTxt[2]={0x4B,0};
       char gateOnTxt[16];
 
-      sprintf(txtSteps,"STEP:%02d",seq_getCurrentRecordStep());
-      sprintf(txtSync,"SYNC:%s","INT");
+      sprintf(txtSteps,"STEP:%02d",seq_getCurrentRecordStep()); 
       sprintf(txtBpm,"BPM:%03d",seq_getBpmRate());
       switch(seq_getGateOnPercent())
       {
@@ -590,6 +595,12 @@ static void showSequencerMainScreen(void)
           case SEQ_GATE_ON_PERCENT_50: sprintf(gateOnTxt,"Gate:50%%");break;
           case SEQ_GATE_ON_PERCENT_75: sprintf(gateOnTxt,"Gate:75%%");break;
           case SEQ_GATE_ON_PERCENT_90: sprintf(gateOnTxt,"Gate:90%%");break;
+      }
+      switch(seq_getExternalSyncType())
+      {
+          case SEQ_SYNC_TYPE_INTERNAL:sprintf(txtSync,"SYNC:%s","INT");break;
+          case SEQ_SYNC_TYPE_EXTERNAL:sprintf(txtSync,"SYNC:%s","EXT");break;
+          case SEQ_SYNC_TYPE_MIDI:sprintf(txtSync,"SYNC:%s","MIDI");break;
       }
       
                 

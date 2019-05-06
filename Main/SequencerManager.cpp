@@ -41,9 +41,7 @@ static int gateOnPercent;
 static int syncInType;
 static int externalSyncEvent;
 
-#define    SEQ_SYNC_TYPE_INTERNAL   0
-#define    SEQ_SYNC_TYPE_EXTENAL    1
-#define    SEQ_SYNC_TYPE_MIDI       2
+
 
 void seq_init(void)
 {
@@ -54,7 +52,7 @@ void seq_init(void)
     seq_setBpmRate(120);
     seq_setGateOnPercent(SEQ_GATE_ON_PERCENT_50);
 
-    syncInType = SEQ_SYNC_TYPE_EXTENAL;
+    syncInType = SEQ_SYNC_TYPE_INTERNAL;
     externalSyncEvent = 0;
 }
 
@@ -147,6 +145,17 @@ void seq_externalSyncEvent(void)
 {
     externalSyncEvent=1;
 }
+
+void seq_setExternalSyncType(int val)
+{
+    syncInType = val;
+}
+int seq_getExternalSyncType(void)
+{
+    return syncInType;
+}
+
+
 
 
 void seq_loop(void)
