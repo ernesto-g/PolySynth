@@ -23,6 +23,8 @@
 #define PIN_SW_ENTER  24
 #define PIN_SW_SHIFT  48
 
+#define PIN_SYNC_IN   42
+
     
 #define LEN_SW          7
 
@@ -50,7 +52,7 @@ static void swStateMachine(int swIndex);
 static unsigned char state[LEN_SW];
 static unsigned char switchesState[LEN_SW];
 static volatile unsigned int timeouts[LEN_SW];
-
+static volatile int flagSyncInPulse=0;
 
 
 
@@ -78,6 +80,11 @@ static void isrEncD(void) {
     encoderD.tick();
 }
 
+static void isrSyncIn(void)
+{
+    flagSyncInPulse=1;
+}
+
 void frontp_init(void)
 {
     pinMode(PIN_1_ENC_A, INPUT_PULLUP);
@@ -99,6 +106,9 @@ void frontp_init(void)
     pinMode(PIN_2_ENC_D, INPUT_PULLUP);
     attachInterrupt(digitalPinToInterrupt(PIN_1_ENC_D),isrEncD, CHANGE);
     attachInterrupt(digitalPinToInterrupt(PIN_2_ENC_D),isrEncD, CHANGE);
+
+    pinMode(PIN_SYNC_IN, INPUT);
+    attachInterrupt(digitalPinToInterrupt(PIN_SYNC_IN),isrSyncIn, FALLING);
 
     // change priorities to lowest
     NVIC_SetPriority(PIOA_IRQn, 0xFF);
@@ -129,6 +139,15 @@ void frontp_loop(void)
     int i;
     for(i=0;i<LEN_SW; i++)
       swStateMachine(i);
+}
+
+int frontp_getExternalSyncPulse(void)
+{
+    return flagSyncInPulse;
+}
+void frontp_resetExternalSyncPulse(void)
+{
+    flagSyncInPulse=0;
 }
 
 

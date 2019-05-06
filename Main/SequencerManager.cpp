@@ -1,6 +1,8 @@
 #include "MIDIReception.h"
 #include "MIDIManager.h"
 #include "SequencerManager.h"
+#include "FrontPanel.h"
+
 
 #define STEPS_LEN         64
 #define TRACKS_LEN        4
@@ -36,7 +38,12 @@ static int playIndexes[TRACKS_LEN];
 static int maxIndexes[TRACKS_LEN];
 
 static int gateOnPercent;
+static int syncInType;
+static int externalSyncEvent;
 
+#define    SEQ_SYNC_TYPE_INTERNAL   0
+#define    SEQ_SYNC_TYPE_EXTENAL    1
+#define    SEQ_SYNC_TYPE_MIDI       2
 
 void seq_init(void)
 {
@@ -46,14 +53,20 @@ void seq_init(void)
     maxIndexes[TRACK_0] = 0;
     seq_setBpmRate(120);
     seq_setGateOnPercent(SEQ_GATE_ON_PERCENT_50);
+
+    syncInType = SEQ_SYNC_TYPE_EXTENAL;
+    externalSyncEvent = 0;
 }
 
 static volatile int tempoCounter;
 static volatile int timeoutRelease;
 void seq_sysTick(void)
 {
-    if(tempoCounter>0)
-      tempoCounter--;
+    if(syncInType==SEQ_SYNC_TYPE_INTERNAL)
+    {
+        if(tempoCounter>0)
+            tempoCounter--;
+    }
 
     if(timeoutRelease>0)
       timeoutRelease--;
@@ -130,7 +143,10 @@ int seq_getGateOnPercent(void)
     return gateOnPercent;
 }
 
-
+void seq_externalSyncEvent(void)
+{
+    externalSyncEvent=1;
+}
 
 
 void seq_loop(void)
@@ -182,6 +198,23 @@ static void playStateMachine(void)
     MidiInfo* pmi;
     int i;
     int notesMax;
+
+    if(frontp_getExternalSyncPulse())
+    {
+        frontp_resetExternalSyncPulse();
+        externalSyncEvent=1;
+    }
+    
+    if(syncInType!=SEQ_SYNC_TYPE_INTERNAL)
+    {    
+        if(externalSyncEvent==1)
+        {
+            externalSyncEvent=0;
+            tempoCounter=0; 
+        }
+        else
+            tempoCounter=1;
+    }
     
     if(tempoCounter==0)
     {

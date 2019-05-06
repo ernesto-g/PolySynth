@@ -13,7 +13,7 @@ int seq_getCurrentRecordStep(void);
 void seq_nextStepEvent(void);
 void seq_setGateOnPercent(int value);
 int seq_getGateOnPercent(void);
-
+void seq_externalSyncEvent(void);
 
 #define SEQ_STATE_OFF     0
 #define SEQ_STATE_PLAY    1

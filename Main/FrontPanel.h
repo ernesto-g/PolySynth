@@ -22,3 +22,6 @@ void frontp_resetSwState(int swIndex);
 
 void frontp_loop(void);
 void frontp_tick1Ms(void);
+
+int frontp_getExternalSyncPulse(void);
+void frontp_resetExternalSyncPulse(void);
