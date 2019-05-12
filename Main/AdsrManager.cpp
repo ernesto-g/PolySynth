@@ -31,6 +31,8 @@ static int volatile attackRate[ADSR_LEN];
 static int volatile decayRate[ADSR_LEN];
 static int volatile sustainValue[ADSR_LEN];
 static int volatile releaseRate[ADSR_LEN];
+static int volatile attackMaxValue[ADSR_LEN];
+static int volatile sustainMaxValue[ADSR_LEN];
 
 static int volatile attackRateCounter[ADSR_LEN];
 static int volatile decayRateCounter[ADSR_LEN];
@@ -41,9 +43,12 @@ static int volatile lowSpeedDivider;
 static int adsrVcfMode;
 
 static volatile int adsrThresholdForFreeVoice;
+static volatile int adsrEnableVelocity;
 
 // Private functions
 static void setAdsrPwmValue(int i, int value);
+static int calculateAttackMaxValue(int vel);
+static int calculateSustainValue(int index, int vel);
 
 
 void adsr_init(void)
@@ -59,6 +64,8 @@ void adsr_init(void)
     decayRate[i]=64; //64;
     sustainValue[i] = ATTACK_MAX_VALUE*2/3; //ATTACK_MAX_VALUE/2;
     releaseRate[i]=64; //64;
+    attackMaxValue[i] = ATTACK_MAX_VALUE;
+    sustainMaxValue[i] = ATTACK_MAX_VALUE*2/3;
 
     attackRateCounter[i]=attackRate[i];
     decayRateCounter[i]=decayRate[i];
@@ -67,7 +74,9 @@ void adsr_init(void)
     setAdsrPwmValue(i,adsrValue[i]);
   }
 
-  adsrThresholdForFreeVoice = (ATTACK_MAX_VALUE/2)/10; // leer de configuracion
+  adsrThresholdForFreeVoice = ATTACK_MAX_VALUE; //(ATTACK_MAX_VALUE/2)/10; // leer de configuracion
+  adsrEnableVelocity = 1; // leer de configuracion
+  
   flagEnvLowSpeed=0;
   lowSpeedDivider=0;
   adsrVcfMode = ADSR_VCF_MODE_0;
@@ -80,6 +89,10 @@ void adsr_gateOnEvent(void)
 }
 int adsr_gateOffEvent(int index)
 {
+    //Serial.print("release index:");
+    //Serial.print(index,DEC);
+    //Serial.print(" \n");
+    
     int ret=0;
     // release index voice
     releaseRateCounter[index] = releaseRate[index];
@@ -107,14 +120,40 @@ int adsr_gateOffEvent(int index)
     return ret;
 }
 
+static int calculateAttackMaxValue(int vel)
+{
+    if(adsrEnableVelocity==1)
+    {
+        return (ATTACK_MAX_VALUE*vel)/127;        
+    }
+    else
+    {
+        return ATTACK_MAX_VALUE;
+    }
+}
+static int calculateSustainValue(int index, int vel)
+{
+    if(adsrEnableVelocity==1)
+    {
+        return (sustainMaxValue[index]*vel)/127;        
+    }
+    else
+    {
+        return sustainMaxValue[index];
+    }   
+}
+
 void adsr_triggerEvent(int index, int vel) // vel can be used to modulate attack rate
 {
+    
     if(state[index]!=STATE_SUSTAIN)
     {
-        attackRateCounter[index]=attackRate[index];
+        attackRateCounter[index] = attackRate[index];
+        attackMaxValue[index] = calculateAttackMaxValue(vel);
+        sustainValue[index] = calculateSustainValue(index,vel);
         state[index] = STATE_ATTACK;
     }
-
+    
     // retrigger ADSR for VCF
     switch(adsrVcfMode)
     {
@@ -123,6 +162,8 @@ void adsr_triggerEvent(int index, int vel) // vel can be used to modulate attack
             if(state[ADSR_FOR_VCF]!=STATE_SUSTAIN) // only trigger once
             {
                 attackRateCounter[ADSR_FOR_VCF]=attackRate[ADSR_FOR_VCF];
+                attackMaxValue[ADSR_FOR_VCF]=calculateAttackMaxValue(vel);
+                sustainValue[ADSR_FOR_VCF] = calculateSustainValue(ADSR_FOR_VCF,vel);
                 state[ADSR_FOR_VCF] = STATE_ATTACK;
             }
             break;
@@ -130,6 +171,8 @@ void adsr_triggerEvent(int index, int vel) // vel can be used to modulate attack
         case ADSR_VCF_MODE_1: // retrigger with each key pressed
         {
             attackRateCounter[ADSR_FOR_VCF]=attackRate[ADSR_FOR_VCF];
+            attackMaxValue[ADSR_FOR_VCF]=calculateAttackMaxValue(vel);
+            sustainValue[ADSR_FOR_VCF] = calculateSustainValue(ADSR_FOR_VCF,vel);
             state[ADSR_FOR_VCF] = STATE_ATTACK;          
             break;
         }
@@ -148,7 +191,6 @@ int adsr_getFreeAdsr(int indexMax)
     }
     
     // there is no free voices, check if any of them is about to finish
-
     // First look for voice with minimun adsr value
     int adsrMinValue=999999;
     int indexMin=-1;
@@ -163,6 +205,7 @@ int adsr_getFreeAdsr(int indexMax)
             }
         }
     }
+    
     // check if this voice is below the threshold
     if(indexMin>=0)
     {
@@ -226,12 +269,21 @@ void adsr_stateMachineTick(void) // freq update: 14,4Khz
         {
           attackRateCounter[i]=attackRate[i];
           adsrValue[i]+=4;
+          /*
           if(adsrValue[i]>=ATTACK_MAX_VALUE)
           {
             adsrValue[i] = ATTACK_MAX_VALUE;
             decayRateCounter[i] = decayRate[i];
             state[i] = STATE_DECAY;
           }
+          */
+          if(adsrValue[i]>=attackMaxValue[i])
+          {
+            adsrValue[i] = attackMaxValue[i];
+            decayRateCounter[i] = decayRate[i];
+            state[i] = STATE_DECAY;
+          }
+          
           //setAdsrPwmValue(i,adsrValue[i]);
         }
         break;
@@ -303,7 +355,7 @@ void adsr_setMidiReleaseRate(int i, int value)
 }
 void adsr_setMidiSustainValue(int i, int value)
 {
-    sustainValue[i] = (value*SUSTAIN_MAX_VALUE)/127;
+    sustainMaxValue[i] = (value*SUSTAIN_MAX_VALUE)/127;
 }
 
 int adsr_getMidiAttackRate(int i)
@@ -320,7 +372,7 @@ int adsr_getMidiReleaseRate(int i)
 }
 int adsr_getMidiSustainValue(int i)
 {
-    return (127*sustainValue[i])/SUSTAIN_MAX_VALUE;
+    return (127*sustainMaxValue[i])/SUSTAIN_MAX_VALUE;
 }
 
 void adsr_setFlagEnvLowSpeed(int value)

@@ -43,9 +43,9 @@ void mem_init(void)
     Wire.begin();
   
     unsigned char c = EEPROM_read(0x55);
-    Serial.print("LEI BYTE:");
-    Serial.print(c,DEC);
-    Serial.print("\n");
+    //Serial.print("LEI BYTE:");
+    //Serial.print(c,DEC);
+    //Serial.print("\n");
 
     
     //Serial.print("Escribo...\n");

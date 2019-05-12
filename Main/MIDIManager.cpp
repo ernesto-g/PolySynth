@@ -117,7 +117,7 @@ static int getIndexOfPressedKey(int note)
 static int deleteKey(int note)
 {
     int index = getIndexOfPressedKey(note);
-    if(index<KEYS_PRESSED_LEN)
+    if(index>=0 && index<KEYS_PRESSED_LEN)
     {
       keysPressed[index].flagFree=1;
       return keysPressed[index].voice;
